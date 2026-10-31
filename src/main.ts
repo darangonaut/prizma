@@ -233,7 +233,8 @@ class Game {
         const b = document.createElement('button');
         const { no } = chamberNo(i);
         const best = this.save.best[s.id];
-        b.innerHTML = `${zi + 1}-${no}<small>${best ? t('best', { n: best }) : i <= this.save.reached ? '—' : t('locked')}</small>`;
+        const open = i <= this.save.reached;
+        b.innerHTML = `${zi + 1}-${no} ${open ? t(`ch_${s.id}`) : ''}<small>${best ? t('best', { n: best }) : open ? '—' : t('locked')}</small>`;
         b.disabled = i > this.save.reached;
         b.addEventListener('click', () => {
           this.audio.unlock();
@@ -283,12 +284,12 @@ class Game {
     this.buildRealityButtons();
     this.updateHud();
     this.controls.clear();
-    const { zone, no, of } = chamberNo(i);
+    const { zone, no } = chamberNo(i);
     const first = i === 0 || SECTORS[i - 1]!.zone !== def.zone;
     if (first) {
       const card = $('#zone-card');
       $('.zc-zone', card).textContent = t(`zone_${def.zone}`);
-      $('.zc-no', card).textContent = `${zone + 1} · ${no}/${of}`;
+      $('.zc-no', card).textContent = `${zone + 1}-${no} · ${t(`ch_${def.id}`)}`;
       card.style.setProperty('--accent', PALETTES[Math.min(zone, 3)]!.css);
       card.classList.add('show');
       setTimeout(() => card.classList.remove('show'), 1900);
@@ -350,8 +351,9 @@ class Game {
     const w = this.world;
     if (!w) return;
     const { zone, no, of } = chamberNo(this.index);
-    $('#hud .zone').textContent = t(`zone_${SECTORS[this.index]!.zone}`);
-    $('#hud .chamber-no').textContent = `${zone + 1}-${no}/${of}`;
+    $('#hud .zone').textContent = `${zone + 1}-${no}`;
+    $('#hud .chamber-no').textContent = t(`ch_${SECTORS[this.index]!.id}`);
+    $('#hud .chamber-no').title = `${t(`zone_${SECTORS[this.index]!.zone}`)} ${no}/${of}`;
     $('#hud .moves').textContent = `${t('moves')} ${this.moves}`;
     $('#hud .logs').textContent = `❏ ${this.save.logs.length}/${TOTAL_LOGS}`;
     $('#hud .echoes').textContent = `◈ ${this.save.echoes.length}/${TOTAL_ECHOES}`;

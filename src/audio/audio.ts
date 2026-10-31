@@ -14,8 +14,9 @@ const CHORDS = [
 ];
 
 interface Pad {
+  r: number;
   gain: GainNode;
-  filter: BiquadFilterNode;
+  nodes: AudioScheduledSourceNode[];
 }
 
 export class Audio {
@@ -23,7 +24,7 @@ export class Audio {
   private master!: GainNode;
   private music!: GainNode;
   private sfx!: GainNode;
-  private pads: Pad[] = [];
+  private pad: Pad | null = null;
   private current = 0;
   private arpTimer = 0;
   private arpStep = 0;
@@ -68,12 +69,13 @@ export class Audio {
     const data = this.noise.getChannelData(0);
     for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
 
-    CHORDS.forEach((chord, r) => this.pads.push(this.makePad(chord, r)));
     this.setReality(this.current, true);
   }
 
+  /** Plocha jednej reality; beží len tá aktuálna (a pri prelínaní dve). */
   private makePad(chord: number[], r: number): Pad {
     const ctx = this.ctx!;
+    const nodes: AudioScheduledSourceNode[] = [];
     const gain = ctx.createGain();
     gain.gain.value = 0;
     const filter = ctx.createBiquadFilter();
@@ -82,7 +84,7 @@ export class Audio {
     filter.Q.value = r === 3 ? 6 : 1;
     filter.connect(gain).connect(this.music);
     const type: OscillatorType[] = ['sine', 'triangle', 'sawtooth', 'square'];
-    chord.forEach((f, i) => {
+    chord.slice(0, 4).forEach((f, i) => {
       for (const det of [-6, 7]) {
         const o = ctx.createOscillator();
         o.type = i < 2 ? 'sine' : type[r]!;
@@ -99,6 +101,7 @@ export class Audio {
         o.connect(g).connect(filter);
         o.start();
         lfo.start();
+        nodes.push(o, lfo);
       }
     });
     // Hlbina: filter sa pomaly vlní ako pod vodou.
@@ -109,18 +112,24 @@ export class Audio {
       lg.gain.value = 220;
       lfo.connect(lg).connect(filter.frequency);
       lfo.start();
+      nodes.push(lfo);
     }
-    return { gain, filter };
+    return { r, gain, nodes };
   }
 
   setReality(r: number, instant = false): void {
     this.current = r;
-    if (!this.ctx) return;
+    if (!this.ctx || this.pad?.r === r) return;
     const now = this.ctx.currentTime;
-    this.pads.forEach((p, i) => {
-      p.gain.gain.cancelScheduledValues(now);
-      p.gain.gain.setTargetAtTime(i === r ? 1 : 0, now, instant ? 0.01 : 0.35);
-    });
+    const old = this.pad;
+    if (old) {
+      old.gain.gain.cancelScheduledValues(now);
+      old.gain.gain.setTargetAtTime(0, now, instant ? 0.01 : 0.35);
+      for (const n of old.nodes) n.stop(now + (instant ? 0.1 : 2));
+    }
+    const pad = this.makePad(CHORDS[r]!, r);
+    pad.gain.gain.setTargetAtTime(1, now, instant ? 0.01 : 0.35);
+    this.pad = pad;
   }
 
   setMuted(m: boolean): void {
