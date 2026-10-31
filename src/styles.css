@@ -696,3 +696,25 @@ body.touch .realities button {
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+@media (max-width: 520px) {
+  .hud-top {
+    gap: 8px;
+  }
+  .hud-title {
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .hud-buttons {
+    gap: 4px;
+  }
+  .hud-buttons button {
+    width: 34px;
+    height: 34px;
+    font-size: 15px;
+  }
+}
