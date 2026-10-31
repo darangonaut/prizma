@@ -1,7 +1,7 @@
 // Pomocný výpis pre ladenie máp: DEV_SECTOR=id npx vitest run tests/dev-solve.test.ts
 import { test } from 'vitest';
 import { SECTORS, unlockedAt } from '@/game/sectors';
-import { solve } from './solver';
+import { solve } from '@/game/solver';
 
 test.skipIf(!process.env.DEV_SECTOR)(
   'dev solve',

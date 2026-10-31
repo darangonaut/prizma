@@ -7,6 +7,7 @@ export type Action =
   | { t: 'undo' }
   | { t: 'reset' }
   | { t: 'pause' }
+  | { t: 'hint' }
   | { t: 'confirm' };
 
 const KEY_DIR: Record<string, Dir> = {
@@ -59,6 +60,7 @@ export class Controls {
         this.queue.push({ t: 'cycle', d: 1 });
       } else if (k === 'z' || k === 'backspace' || k === 'u') this.queue.push({ t: 'undo' });
       else if (k === 'r') this.queue.push({ t: 'reset' });
+      else if (k === 'h') this.queue.push({ t: 'hint' });
       else if (k === 'escape' || k === 'p') this.queue.push({ t: 'pause' });
       else if (k === 'enter') this.queue.push({ t: 'confirm' });
       else if (k === ' ' || k === 'shift') {

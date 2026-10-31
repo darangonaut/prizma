@@ -4,7 +4,7 @@
 import { test } from 'vitest';
 import { TEMPLATES, type Template } from './templates';
 import { World } from '@/game/world';
-import { solve } from './solver';
+import { solve } from '@/game/solver';
 import type { SectorDef } from '@/game/types';
 
 const FLOOR = ['.', ',', '"', ':'];

@@ -11,8 +11,10 @@ export const en: Locale = {
     on: 'on',
     off: 'off',
     controlsKeys:
-      'Move: arrows / WASD · Shift reality: 1–4 or Q / E · Look through: hold Space · Undo: Z · Restart: R',
+      'Move: arrows / WASD · Shift reality: 1–4 or Q / E · Look through: hold Space · Undo: Z · Restart: R · Hint: H',
     controlsTouch: 'Swipe or use the pad · Tap a reality to shift · Hold ◎ to look through',
+    hintThinking: 'Thinking…',
+    hintNone: 'No way out from here. Undo or restart.',
     paused: 'Paused',
     resume: 'Resume',
     restart: 'Restart chamber',

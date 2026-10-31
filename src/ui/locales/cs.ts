@@ -11,8 +11,10 @@ export const cs: Locale = {
     on: 'zap.',
     off: 'vyp.',
     controlsKeys:
-      'Pohyb: šipky / WASD · Přesun do reality: 1–4 nebo Q / E · Nahlédnout: drž mezerník · Zpět: Z · Restart: R',
+      'Pohyb: šipky / WASD · Přesun do reality: 1–4 nebo Q / E · Nahlédnout: drž mezerník · Zpět: Z · Restart: R · Nápověda: H',
     controlsTouch: 'Švihni nebo použij ovladač · Ťukni na realitu pro přesun · Drž ◎ a nahlédneš',
+    hintThinking: 'Přemýšlím…',
+    hintNone: 'Odsud už to nejde. Vrať tah nebo restartuj.',
     paused: 'Pauza',
     resume: 'Pokračovat',
     restart: 'Restartovat komoru',

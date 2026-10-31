@@ -11,6 +11,7 @@ import { endingAvailable, loadSave, writeSave, type SaveData } from '@/game/save
 import { SECTORS, unlockedAt } from '@/game/sectors';
 import type { Ev } from '@/game/types';
 import { World, type Snap } from '@/game/world';
+import type { Action as SolverAction } from '@/game/solver';
 import { getLang, realityName, setLang, story, t, type Lang, type StoryEntry } from '@/ui/i18n';
 import { TitleArt } from '@/ui/title';
 
@@ -64,6 +65,9 @@ class Game {
     null;
   private toastTimer = 0;
   private titleArt = new TitleArt($<HTMLCanvasElement>('.title-art'));
+  private worker: Worker | null = null;
+  private hintId = 0;
+  private hintTimer = 0;
 
   constructor(private app: Application) {
     this.store = (() => {
@@ -125,6 +129,7 @@ class Game {
     click('#paused .to-menu', () => this.showTitle());
     click('#cleared .next', () => this.nextChamber());
     click('#ending .ending-menu', () => this.showTitle());
+    click('#hud .hint', () => this.controls.push({ t: 'hint' }));
     click('#hud .undo', () => this.controls.push({ t: 'undo' }));
     click('#hud .reset', () => this.controls.push({ t: 'reset' }));
     click('#hud .mute', () => this.toggleMute());
@@ -446,6 +451,10 @@ class Game {
       $('#dialog .text').textContent = this.dialog.full.slice(0, Math.floor(this.dialog.shown));
     }
     this.cooldown -= dt;
+    if (this.hintTimer > 0) {
+      this.hintTimer -= dt;
+      if (this.hintTimer <= 0) this.renderer.hint = [];
+    }
     if (this.state === 'play' && this.world) {
       this.renderer.peekTarget = this.controls.peek && !this.dialog ? 1 : 0;
       while (this.cooldown <= 0) {
@@ -468,7 +477,11 @@ class Game {
       else if (a.t === 'pause') this.pause();
       return;
     }
+    if (a.t !== 'confirm' && a.t !== 'pause') this.clearHint();
     switch (a.t) {
+      case 'hint':
+        this.requestHint();
+        break;
       case 'move':
       case 'shift':
       case 'cycle': {
@@ -594,6 +607,51 @@ class Game {
     if (dialogs.length) this.openDialog(dialogs);
     this.updateHud();
     void w;
+  }
+
+  // ---------- nápoveda ----------
+
+  private requestHint(): void {
+    const w = this.world;
+    if (!w) return;
+    if (!this.worker) {
+      this.worker = new Worker(new URL('./hint.worker.ts', import.meta.url), { type: 'module' });
+      this.worker.onmessage = (e: MessageEvent<{ id: number; steps: SolverAction[] | null }>) =>
+        this.showHint(e.data.id, e.data.steps);
+    }
+    const id = ++this.hintId;
+    this.toast(t('hintThinking'));
+    this.worker.postMessage({ id, index: this.index, unlocked: [...w.unlocked], snap: w.snap() });
+  }
+
+  private showHint(id: number, steps: SolverAction[] | null): void {
+    const w = this.world;
+    if (!w || id !== this.hintId) return;
+    if (!steps) {
+      this.toast(t('hintNone'));
+      return;
+    }
+    // Prehranie riešenia na kópii sveta, aby šípky stáli tam, kde budú kroky.
+    const sim = new World(SECTORS[this.index]!, w.unlocked);
+    sim.restore(w.snap());
+    const hint: Renderer['hint'] = [];
+    for (const step of steps.slice(0, 6)) {
+      if ('m' in step) {
+        hint.push({ x: sim.px, y: sim.py, r: sim.pr, dir: step.m });
+        sim.move(step.m);
+      } else {
+        sim.shift(step.s);
+        hint.push({ x: sim.px, y: sim.py, r: step.s, shift: true });
+      }
+    }
+    this.renderer.hint = hint;
+    this.hintTimer = 10;
+    $('#toast').classList.remove('show');
+  }
+
+  private clearHint(): void {
+    this.hintId++;
+    this.renderer.hint = [];
   }
 
   private cleared(): void {

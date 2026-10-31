@@ -11,8 +11,10 @@ export const sk: Locale = {
     on: 'zap.',
     off: 'vyp.',
     controlsKeys:
-      'Pohyb: šípky / WASD · Presun do reality: 1–4 alebo Q / E · Nahliadnuť: drž medzerník · Späť: Z · Reštart: R',
+      'Pohyb: šípky / WASD · Presun do reality: 1–4 alebo Q / E · Nahliadnuť: drž medzerník · Späť: Z · Reštart: R · Nápoveda: H',
     controlsTouch: 'Švihni alebo použi ovládač · Ťukni na realitu pre presun · Drž ◎ a nahliadneš',
+    hintThinking: 'Premýšľam…',
+    hintNone: 'Odtiaľto sa to už nedá. Vráť ťah alebo reštartuj.',
     paused: 'Pauza',
     resume: 'Pokračovať',
     restart: 'Reštartovať komoru',

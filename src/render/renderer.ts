@@ -51,6 +51,8 @@ export class Renderer {
   private rings: { x: number; y: number; t: number; color: number }[] = [];
   private sparks: { x: number; y: number; vx: number; vy: number; t: number; color: number }[] = [];
   insets: Insets = { top: 60, bottom: 90, left: 12, right: 12 };
+  /** Nápoveda: najbližšie kroky riešenia (smer alebo presun do reality). */
+  hint: { x: number; y: number; r: number; dir?: number; shift?: boolean }[] = [];
   /** Nahliadnutie do ostatných realít (podržané tlačidlo). */
   peek = 0;
   peekTarget = 0;
@@ -821,6 +823,28 @@ export class Renderer {
       s.vy *= 0.9;
       g.circle(s.x, s.y, 2 * (1 - s.t / 0.6)).fill({ color: s.color, alpha: 1 - s.t / 0.6 });
     }
+    // Nápoveda: šípky po ceste, krúžok pri presune do inej reality.
+    this.hint.forEach((h, i) => {
+      const a = Math.max(0.15, 0.95 - i * 0.12) * (0.65 + 0.35 * Math.sin(this.time * 6 - i * 0.7));
+      const color = PALETTES[h.r]!.neon;
+      const cx = (h.x + 0.5) * T;
+      const cy = (h.y + 0.5) * T;
+      if (h.shift) {
+        g.circle(cx, cy, T * 0.42).stroke({ width: 3, color, alpha: a });
+        g.circle(cx, cy, T * 0.3).stroke({ width: 1.5, color: WHITE, alpha: a * 0.6 });
+        return;
+      }
+      const d = h.dir as Dir;
+      const fx = DX[d];
+      const fy = DY[d];
+      const tipX = cx + fx * T * 0.42;
+      const tipY = cy + fy * T * 0.42;
+      const k = T * 0.16;
+      g.moveTo(tipX - fx * k - fy * k, tipY - fy * k - fx * k)
+        .lineTo(tipX, tipY)
+        .lineTo(tipX - fx * k + fy * k, tipY - fy * k + fx * k)
+        .stroke({ width: 3, color, alpha: a });
+    });
     // Varovanie pri zablokovanom presune.
     if (this.glitch > 0.3 && this.nudge > 0) {
       const w = this.world!;

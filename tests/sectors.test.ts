@@ -4,7 +4,7 @@ import { World } from '@/game/world';
 import { en } from '@/ui/locales/en';
 import { sk } from '@/ui/locales/sk';
 import { cs } from '@/ui/locales/cs';
-import { solve } from './solver';
+import { solve } from '@/game/solver';
 
 describe('komory', () => {
   it.each(SECTORS.map((s, i) => [s.id, i] as const))(

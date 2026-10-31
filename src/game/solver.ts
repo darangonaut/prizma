@@ -1,5 +1,5 @@
 import type { Dir, SectorDef } from '@/game/types';
-import { World } from '@/game/world';
+import { World, type Snap } from '@/game/world';
 
 export type Action = { m: Dir } | { s: number };
 
@@ -9,17 +9,18 @@ export interface Solution {
 }
 
 /**
- * Prehľadávanie do šírky cez všetky stavy sektora (pozícia, realita, bedne, zrkadlá, páky,
+ * Prehľadávanie do šírky cez všetky stavy komory (pozícia, realita, bedne, zrkadlá, páky,
  * predmety). Vráti najkratšiu cestu k výťahu, alebo null, ak sektor nemá riešenie.
  * `goal` môže cieľ nahradiť (napr. „stojí pri jadre“).
  */
 export function solve(
   def: SectorDef,
   unlocked: number[] = [0],
-  opts: { limit?: number; goal?: (w: World) => boolean; inv?: string[] } = {},
+  opts: { limit?: number; goal?: (w: World) => boolean; inv?: string[]; from?: Snap } = {},
 ): Solution | null {
   const limit = opts.limit ?? 2_000_000;
   const world = new World(def, unlocked, opts.inv ?? []);
+  if (opts.from) world.restore(opts.from);
   const actions: Action[] = [0, 1, 2, 3].map((m) => ({ m: m as Dir }));
   for (let r = 0; r < world.layers; r++) actions.push({ s: r });
   const start = world.snap();
