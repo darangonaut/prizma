@@ -39,6 +39,8 @@ export interface SectorDef {
   drain?: string;
   /** Správa HALO pri vstupe. */
   intro?: string;
+  /** Reality, bez ktorých sa komora nesmie dať prejsť (test); predvolene všetky naladené. */
+  needs?: number[];
 }
 
 /** Udalosti z jednej akcie — pre zvuk, efekty a príbeh. */

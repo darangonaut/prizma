@@ -2,7 +2,8 @@
 // hľadá horolezeckým algoritmom variant s čo najťažším riešením.
 // Spustenie: FORGE=id FORGE_ITER=400 npx vitest run tests/forge.test.ts
 import { test } from 'vitest';
-import { TEMPLATES } from './templates';
+import { TEMPLATES, type Template } from './templates';
+import { World } from '@/game/world';
 import { solve } from './solver';
 import type { SectorDef } from '@/game/types';
 
@@ -43,7 +44,9 @@ function fill(t: SectorDef, cells: Cell[], vals: number[]): SectorDef {
   return { ...t, layers: layers.map((rows) => rows.map((r) => r.join(''))) };
 }
 
-function score(def: SectorDef, unlocked: number[], need: number[]): number {
+function score(def: SectorDef, tpl: Template): number {
+  const unlocked = tpl.unlocked;
+  const need = tpl.need ?? unlocked.slice(1);
   const sol = solve(def, unlocked, { limit: 400_000 });
   // Neriešiteľné: čím menej prekážok, tým bližšie k riešeniu.
   if (!sol)
@@ -65,17 +68,30 @@ function score(def: SectorDef, unlocked: number[], need: number[]): number {
       )
     )
       penalty += 500;
+  // Prehranie riešenia: ťahy, ktoré menia hádanku, sú cennejšie než chôdza.
+  const w = new World(def, unlocked);
+  let pushes = 0;
+  let rotations = 0;
   let shifts = 0;
-  let last = -1;
-  let turns = 0;
   for (const a of sol.steps) {
-    if ('s' in a) shifts++;
-    else {
-      if (last !== -1 && last !== a.m) turns++;
-      last = a.m;
+    const ev = 'm' in a ? w.move(a.m) : w.shift(a.s);
+    for (const e of ev) {
+      if (e.t === 'push') pushes++;
+      if (e.t === 'rotate') rotations++;
+      if (e.t === 'shift') shifts++;
     }
   }
-  return sol.steps.length + shifts * 3 + turns * 0.5 + Math.log2(sol.explored) - penalty;
+  if (tpl.minRotations && rotations < tpl.minRotations)
+    penalty += 200 * (tpl.minRotations - rotations);
+  if (tpl.minPushes && pushes < tpl.minPushes) penalty += 200 * (tpl.minPushes - pushes);
+  return (
+    sol.steps.length * 0.5 +
+    pushes * 4 +
+    rotations * 4 +
+    shifts * 3 +
+    Math.log2(sol.explored) * 1.5 -
+    penalty
+  );
 }
 
 test.skipIf(!process.env.FORGE)(
@@ -95,13 +111,14 @@ test.skipIf(!process.env.FORGE)(
     );
     const iters = Number(process.env.FORGE_ITER ?? 300);
     const seeds = Number(process.env.FORGE_SEEDS ?? 3);
+    const seed0 = Number(process.env.FORGE_SEED0 ?? 1);
     let best = { s: -Infinity, def: tpl.def };
-    for (let seed = 1; seed <= seeds; seed++) {
+    for (let seed = seed0; seed < seed0 + seeds; seed++) {
       const rand = rng(seed * 7919 + 13);
       const pick = (c: Cell) =>
         rand() < (tpl.density ?? 0.35) ? 1 + Math.floor(rand() * (c.opts.length - 1)) : 0;
       let bits = cells.map(pick);
-      let cur = score(fill(tpl.def, cells, bits), tpl.unlocked, tpl.need ?? tpl.unlocked.slice(1));
+      let cur = score(fill(tpl.def, cells, bits), tpl);
       for (let i = 0; i < iters; i++) {
         const next = [...bits];
         const flips = 1 + Math.floor(rand() * 3);
@@ -111,11 +128,7 @@ test.skipIf(!process.env.FORGE)(
             (next[j]! + 1 + Math.floor(rand() * (cells[j]!.opts.length - 1))) %
             cells[j]!.opts.length;
         }
-        const s = score(
-          fill(tpl.def, cells, next),
-          tpl.unlocked,
-          tpl.need ?? tpl.unlocked.slice(1),
-        );
+        const s = score(fill(tpl.def, cells, next), tpl);
         if (s >= cur) {
           bits = next;
           cur = s;

@@ -33,7 +33,7 @@ void main(void) {
   float band = floor(uv.y * 38.0 + uTime * 3.0);
   float g = uGlitch * step(0.72, hash(vec2(band, floor(uTime * 24.0))));
   uv.x += (hash(vec2(band, 3.0)) - 0.5) * 0.06 * g;
-  float ca = (0.9 + uGlitch * 7.0 + g * 10.0) * uScale;
+  float ca = (0.7 + uGlitch * 7.0 + g * 10.0) * min(uScale, 1.2);
   vec3 col;
   col.r = texture(uTexture, uv + vec2(ca, 0.0) * px).r;
   col.g = texture(uTexture, uv).g;

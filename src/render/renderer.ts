@@ -80,7 +80,7 @@ export class Renderer {
       const g = new Graphics();
       this.terrain.push(g);
       this.terrainKey.push('');
-      this.view.addChildAt(g, 1 + r);
+      this.view.addChildAt(g, r);
     }
     this.snap();
     this.layout();
@@ -232,7 +232,14 @@ export class Renderer {
         if (t === ' ') continue;
         if (t === '#') {
           g.rect(X, Y, T, T).fill(pal.wall);
-          g.rect(X, Y, T, T).fill({ color: 0x000000, alpha: 0.55 });
+          g.rect(X, Y, T, T).fill({ color: 0x000000, alpha: 0.6 });
+          // Jemné šrafovanie, aby stena pôsobila plne.
+          for (let i = 1; i < 4; i++) {
+            const o = (i * T) / 4;
+            g.moveTo(X + o, Y).lineTo(X, Y + o);
+            g.moveTo(X + T, Y + o).lineTo(X + o, Y + T);
+          }
+          g.stroke({ width: 1, color: pal.neon, alpha: 0.07 });
           continue;
         }
         // Podlaha pod všetkým ostatným.
@@ -240,7 +247,8 @@ export class Renderer {
         g.rect(X + 1, Y + 1, T - 2, T - 2).stroke({ width: 1, color: pal.neon, alpha: 0.06 });
         g.circle(X, Y, 1.6).fill({ color: pal.neon, alpha: 0.22 });
         if (t === '~' && !drained) {
-          g.rect(X, Y, T, T).fill({ color: mix(pal.bg, pal.neon, 0.12), alpha: 1 });
+          g.rect(X, Y, T, T).fill({ color: mix(pal.bg, pal.neon, 0.2), alpha: 1 });
+          g.rect(X + 2, Y + 2, T - 4, T - 4).stroke({ width: 1, color: pal.neon, alpha: 0.12 });
         } else if (t === '~' || t === ',') {
           // Plytká / vypustená voda: odlesky.
           for (let i = 0; i < 2; i++) {
@@ -355,39 +363,61 @@ export class Renderer {
       .stroke({ width: 1, color, alpha: alpha * 0.35 });
   }
 
-  /** Obrysy ostatných realít — zrkadlové svety presvitajú. */
+  /**
+   * Zrkadlové svety presvitajú: ostatné reality sa kreslia len tam, kde sa líšia od tejto.
+   * Plná šrafa = tam je prekážka (presun sem nepôjde), čiarkovaný rám = tam je priechod.
+   */
   private drawGhost(): void {
     const w = this.world!;
     const g = this.ghost.clear();
     const strong = this.peek;
+    const blocked = (r: number, x: number, y: number) =>
+      !w.walkableTerrain(r, x, y) && w.tile(r, x, y) !== '%';
     for (let r = 0; r < w.layers; r++) {
       if (r === w.pr || !w.unlocked.has(r)) continue;
       const pal = PALETTES[r]!;
-      const alpha = 0.13 + strong * 0.6;
-      const off = (r - w.pr) * 1.5 * (1 - strong);
+      const off = (r - w.pr) * 2 * (1 - strong);
       for (let y = 0; y < w.h; y++) {
         for (let x = 0; x < w.w; x++) {
-          const t = w.tile(r, x, y);
-          const blocked =
-            t === '#' || t === ' ' || t === '%' || t === 'x' || (t === '~' && !w.drained());
-          if (!blocked) continue;
-          if (strong > 0.05)
-            g.rect(x * T + off, y * T + off, T, T).fill({ color: pal.neon, alpha: strong * 0.12 });
-          for (let d = 0; d < 4; d++) {
-            const n = w.tile(r, x + DX[d as Dir], y + DY[d as Dir]);
-            const nb =
-              n === '#' || n === ' ' || n === '%' || n === 'x' || (n === '~' && !w.drained());
-            if (nb || !w.inside(x + DX[d as Dir], y + DY[d as Dir])) continue;
-            const X = x * T + off;
-            const Y = y * T + off;
-            if (d === 0) g.moveTo(X, Y + 2).lineTo(X + T, Y + 2);
-            if (d === 2) g.moveTo(X, Y + T - 2).lineTo(X + T, Y + T - 2);
-            if (d === 3) g.moveTo(X + 2, Y).lineTo(X + 2, Y + T);
-            if (d === 1) g.moveTo(X + T - 2, Y).lineTo(X + T - 2, Y + T);
+          const here = blocked(w.pr, x, y) || w.tile(w.pr, x, y) === '%';
+          const there = blocked(r, x, y) || w.tile(r, x, y) === '%';
+          if (here === there) continue;
+          const X = x * T + off;
+          const Y = y * T + off;
+          if (there) {
+            // Prekážka v inej realite nad našou podlahou.
+            g.rect(X + 4, Y + 4, T - 8, T - 8).fill({
+              color: pal.neon,
+              alpha: 0.04 + strong * 0.12,
+            });
+            for (let i = 1; i < 3; i++) {
+              const o = (i * (T - 8)) / 3;
+              g.moveTo(X + 4 + o, Y + 4).lineTo(X + 4, Y + 4 + o);
+              g.moveTo(X + T - 4, Y + 4 + o).lineTo(X + 4 + o, Y + T - 4);
+            }
+            g.stroke({ width: 1, color: pal.neon, alpha: 0.1 + strong * 0.45 });
+          } else {
+            // Priechod v inej realite tam, kde je u nás stena.
+            const k = 6;
+            for (const [ax, ay, bx, by] of [
+              [X + k, Y + k, X + T - k, Y + k],
+              [X + T - k, Y + k, X + T - k, Y + T - k],
+              [X + T - k, Y + T - k, X + k, Y + T - k],
+              [X + k, Y + T - k, X + k, Y + k],
+            ] as const) {
+              for (let i = 0; i < 3; i++) {
+                const t0 = i / 3 + 0.04;
+                const t1 = t0 + 0.2;
+                g.moveTo(ax + (bx - ax) * t0, ay + (by - ay) * t0).lineTo(
+                  ax + (bx - ax) * t1,
+                  ay + (by - ay) * t1,
+                );
+              }
+            }
+            g.stroke({ width: 1.5, color: pal.neon, alpha: 0.22 + strong * 0.6 });
           }
         }
       }
-      g.stroke({ width: 1.5, color: pal.neon, alpha });
       if (strong > 0.05) {
         for (const e of w.ents) {
           if (e.r !== r || w.gone(e) || e.k === 'trigger') continue;

@@ -196,6 +196,7 @@ const amber: SectorDef = {
   id: 'amber',
   zone: 'hydro',
   intro: 'hydro-intro',
+  needs: [],
   legend: {
     Y: { k: 'crystal', reality: 2 },
     r: { k: 'item', item: 'cutter' },

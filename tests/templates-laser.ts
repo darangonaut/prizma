@@ -6,6 +6,7 @@ export const LASER_TEMPLATES: Record<string, Template> = {
     unlocked: [0],
     density: 0.3,
     need: [],
+    minRotations: 3,
     def: {
       id: 'beam',
       zone: 'reactor',
@@ -35,6 +36,7 @@ export const LASER_TEMPLATES: Record<string, Template> = {
     unlocked: [0, 1],
     density: 0.3,
     need: [1],
+    minRotations: 2,
     def: {
       id: 'phase',
       zone: 'reactor',
@@ -77,6 +79,7 @@ export const LASER_TEMPLATES: Record<string, Template> = {
     unlocked: [0, 1, 2],
     density: 0.3,
     need: [1, 2],
+    minPushes: 3,
     def: {
       id: 'shadow',
       zone: 'reactor',
@@ -127,6 +130,8 @@ export const LASER_TEMPLATES: Record<string, Template> = {
     unlocked: [0, 1, 2, 3],
     density: 0.25,
     need: [1, 2, 3],
+    minPushes: 2,
+    minRotations: 1,
     def: {
       id: 'interference',
       zone: 'core',

@@ -8,6 +8,9 @@ export interface Template {
   density?: number;
   /** Reality, bez ktorých sa komora nesmie dať prejsť (predvolene všetky okrem Primy). */
   need?: number[];
+  /** Najmenej otočení zrkadiel / posunov bední v najkratšom riešení. */
+  minRotations?: number;
+  minPushes?: number;
 }
 
 export const TEMPLATES: Record<string, Template> = {
@@ -140,6 +143,7 @@ export const TEMPLATES: Record<string, Template> = {
     unlocked: [0, 1, 2],
     density: 0.25,
     need: [1, 2],
+    minPushes: 6,
     def: {
       id: 'bundle',
       zone: 'hydro',
@@ -234,6 +238,70 @@ export const TEMPLATES: Record<string, Template> = {
           '#!!!!!!!!!!!#',
           '#!!!!!!!!!!!#',
           '#!!!!!!!!!!:#',
+          '#############',
+        ],
+      ],
+    },
+  },
+  heart: {
+    unlocked: [0, 1, 2, 3],
+    density: 0.25,
+    need: [1, 2, 3],
+    minPushes: 6,
+    def: {
+      id: 'heart',
+      zone: 'core',
+      legend: {
+        K: { k: 'core' },
+        g: { k: 'door', open: ['a', 'b', 'c', 'd'] },
+        '1': { k: 'plate', sig: 'a' },
+        '2': { k: 'plate', sig: 'b' },
+        '3': { k: 'plate', sig: 'c' },
+        '4': { k: 'plate', sig: 'd' },
+      },
+      layers: [
+        [
+          '#############',
+          '#@??????????#',
+          '#??E????????#',
+          '#??????1????#',
+          '#????????E??#',
+          '#???????????#',
+          '#####g#######',
+          '#....K......#',
+          '#############',
+        ],
+        [
+          '#############',
+          '#,??????????#',
+          '#???????????#',
+          '#??????2????#',
+          '#???????????#',
+          '#???????????#',
+          '#############',
+          '#,,,,,,,,,,,#',
+          '#############',
+        ],
+        [
+          '#############',
+          '#"!!!!!!!!!!#',
+          '#!!!!!!!!!!!#',
+          '#!!!!!!!!!!!#',
+          '#!!3!!!!!!!!#',
+          '#!!!!!!!!!!!#',
+          '#############',
+          '#"""""""""""#',
+          '#############',
+        ],
+        [
+          '#############',
+          '#:!!!!!!!!!!#',
+          '#!!!!!!!!!!!#',
+          '#!!!!!!!!!!!#',
+          '#!!4!!!!!!!!#',
+          '#!!!!!!!!!!!#',
+          '#############',
+          '#:::::::::::#',
           '#############',
         ],
       ],
