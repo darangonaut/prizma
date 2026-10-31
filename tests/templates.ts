@@ -1,5 +1,6 @@
 import type { SectorDef } from '@/game/types';
 import { LASER_TEMPLATES } from './templates-laser';
+import { GRID_TEMPLATES } from './templates-grid';
 
 /** Predlohy pre kováčňu hádaniek (tests/forge.test.ts). */
 export interface Template {
@@ -15,6 +16,7 @@ export interface Template {
 
 export const TEMPLATES: Record<string, Template> = {
   ...LASER_TEMPLATES,
+  ...GRID_TEMPLATES,
   weave: {
     unlocked: [0, 1],
     density: 0.5,

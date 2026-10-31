@@ -113,6 +113,33 @@ test.skipIf(!process.env.FORGE)(
         }),
       ),
     );
+    // Úplné prehľadanie, ak je kombinácií málo (laserové komory s pevnými stenami).
+    const combos = cells.reduce((n, c) => n * c.opts.length, 1);
+    if (process.env.FORGE_ALL && combos <= 200_000) {
+      let best = { s: -Infinity, vals: [] as number[] };
+      const vals = cells.map(() => 0);
+      for (let k = 0; k < combos; k++) {
+        let x = k;
+        for (let j = 0; j < cells.length; j++) {
+          vals[j] = x % cells[j]!.opts.length;
+          x = Math.floor(x / cells[j]!.opts.length);
+        }
+        const sc = score(fill(tpl.def, cells, vals), tpl, best.s);
+        if (sc > best.s) best = { s: sc, vals: [...vals] };
+      }
+      const d = fill(tpl.def, cells, best.vals);
+      const sol = solve(d, tpl.unlocked);
+      const path = sol?.steps.map((a) => ('m' in a ? '^>v<'[a.m] : 'ABCD'[a.s])).join('');
+      process.stderr.write(
+        `\nNAJLEPŠIE ${best.s.toFixed(1)} z ${combos} — ${sol?.steps.length} krokov: ${path}\n`,
+      );
+      d.layers.forEach((rows) =>
+        process.stderr.write(
+          '    [\n' + rows.map((r) => `      '${r}',`).join('\n') + '\n    ],\n',
+        ),
+      );
+      return;
+    }
     const iters = Number(process.env.FORGE_ITER ?? 300);
     const seeds = Number(process.env.FORGE_SEEDS ?? 3);
     const seed0 = Number(process.env.FORGE_SEED0 ?? 1);
@@ -123,6 +150,16 @@ test.skipIf(!process.env.FORGE)(
         rand() < (tpl.density ?? 0.35) ? 1 + Math.floor(rand() * (c.opts.length - 1)) : 0;
       let bits = cells.map(pick);
       let cur = score(fill(tpl.def, cells, bits), tpl);
+      // Náhodné vzorky ako štart: horolezec potrebuje riešiteľné východisko.
+      for (let k = 0; k < Number(process.env.FORGE_RANDOM ?? 0); k++) {
+        const b = cells.map(pick);
+        const sc = score(fill(tpl.def, cells, b), tpl, cur);
+        if (sc > cur) {
+          bits = b;
+          cur = sc;
+        }
+      }
+      process.stderr.write(`seed ${seed} štart: ${cur.toFixed(1)}\n`);
       for (let i = 0; i < iters; i++) {
         const next = [...bits];
         const flips = 1 + Math.floor(rand() * 3);

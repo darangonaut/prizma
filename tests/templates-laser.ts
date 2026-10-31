@@ -2,6 +2,64 @@ import type { Template } from './templates';
 
 /** Predlohy laserových komôr: `$` je miesto pre zrkadlo (alebo podlahu či stenu). */
 export const LASER_TEMPLATES: Record<string, Template> = {
+  beam3: {
+    unlocked: [0],
+    need: [],
+    density: 0.4,
+    minRotations: 3,
+    def: {
+      id: 'beam3',
+      zone: 'reactor',
+      legend: {
+        e: { k: 'emitter', dir: 1 },
+        r: { k: 'receiver', sig: 'a' },
+        d: { k: 'door', open: ['a'] },
+      },
+      layers: [
+        [
+          '###########',
+          '#@..$.$..$#',
+          '#.#.#.#.#.#',
+          '#e.$.$.$.$#',
+          '#.#.#.#.#.#',
+          '#$.$.$.$.r#',
+          '#.#.#.#.#.#',
+          '#..$.$.$..#',
+          '####d######',
+          '#...>.....#',
+          '###########',
+        ],
+      ],
+    },
+  },
+  beam2: {
+    unlocked: [0],
+    need: [],
+    minRotations: 2,
+    def: {
+      id: 'beam2',
+      zone: 'reactor',
+      legend: {
+        e: { k: 'emitter', dir: 1 },
+        r: { k: 'receiver', sig: 'a' },
+        d: { k: 'door', open: ['a'] },
+      },
+      layers: [
+        [
+          '###########',
+          '#@..#.$..r#',
+          '#...#.#...#',
+          '#e.$..$.$.#',
+          '#...#.#...#',
+          '#.$.#.$.$.#',
+          '#...#.....#',
+          '##d########',
+          '#.>.......#',
+          '###########',
+        ],
+      ],
+    },
+  },
   beam: {
     unlocked: [0],
     density: 0.3,
