@@ -1,11 +1,12 @@
 import { NO_INPUT, type Input } from '@/game/types';
 
-/** Jednorazové povely mimo pohybu (rozhranie). */
+/** Jednorazové povely mimo pohybu. */
 export type Command =
-  | { t: 'shift'; r: number }
-  | { t: 'cycle'; d: 1 | -1 }
+  | { t: 'anchor'; p: number }
+  | { t: 'anchorCycle'; d: 1 | -1 }
+  | { t: 'tap'; x: number; y: number }
   | { t: 'pause' }
-  | { t: 'map' }
+  | { t: 'restart' }
   | { t: 'confirm' };
 
 const MOVE: Record<string, [number, number]> = {
@@ -19,21 +20,26 @@ const MOVE: Record<string, [number, number]> = {
   d: [1, 0],
 };
 
+interface Touch {
+  id: number;
+  ox: number;
+  oy: number;
+  x: number;
+  y: number;
+  t: number;
+  stick: boolean;
+}
+
 /**
- * Klávesnica + myš (mierenie kurzorom), dotyk (virtuálna páčka a tlačidlá) a gamepad.
- * Plynulé ovládanie sa číta každý snímok, jednorazové povely sa zbierajú do fronty.
+ * Klávesnica, dotyk (plávajúca páčka kdekoľvek, ťuknutie na okno = kotva) a gamepad.
+ * Plynulý pohyb sa číta každý snímok, jednorazové povely sa zbierajú do fronty.
  */
 export class Controls {
   private keys = new Set<string>();
   private commands: Command[] = [];
   private dashQueued = false;
-  private lensQueued = false;
-  private mouse = { x: 0, y: 0, down: false, active: false, idle: 0 };
-  private stick: { id: number; ox: number; oy: number; x: number; y: number } | null = null;
-  private fireTouch = false;
-  private peekTouch = false;
+  private touches = new Map<number, Touch>();
   private padPrev: boolean[] = [];
-  private padAim = false;
   touchMode = false;
   onTouchMode: () => void = () => {};
   /** Prvá interakcia (odomknutie zvuku). */
@@ -44,107 +50,86 @@ export class Controls {
       this.onAny();
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       const k = e.key.toLowerCase();
-      if (MOVE[k] || k === ' ' || k === 'tab') e.preventDefault();
+      if (MOVE[k] || k === ' ') e.preventDefault();
       if (e.repeat) return;
       this.keys.add(k);
-      if (k >= '1' && k <= '4') this.commands.push({ t: 'shift', r: Number(k) - 1 });
-      else if (k === 'q') this.commands.push({ t: 'cycle', d: -1 });
-      else if (k === 'e') this.commands.push({ t: 'cycle', d: 1 });
-      else if (k === ' ' || k === 'k') {
+      if (k >= '1' && k <= '4') this.commands.push({ t: 'anchor', p: Number(k) - 1 });
+      else if (k === 'q') this.commands.push({ t: 'anchorCycle', d: -1 });
+      else if (k === 'e') this.commands.push({ t: 'anchorCycle', d: 1 });
+      else if (k === ' ' || k === 'shift' || k === 'k') {
         this.dashQueued = true;
         if (k === ' ') this.commands.push({ t: 'confirm' });
-      } else if (k === 'l' || k === 'c') this.lensQueued = true;
-      else if (k === 'escape' || k === 'p') this.commands.push({ t: 'pause' });
-      else if (k === 'm' || k === 'tab') this.commands.push({ t: 'map' });
+      } else if (k === 'escape' || k === 'p') this.commands.push({ t: 'pause' });
+      else if (k === 'r') this.commands.push({ t: 'restart' });
       else if (k === 'enter') this.commands.push({ t: 'confirm' });
-      else if (k === 'j' || k === 'x') this.commands.push({ t: 'confirm' });
     });
     window.addEventListener('keyup', (e) => this.keys.delete(e.key.toLowerCase()));
     window.addEventListener('blur', () => {
       this.keys.clear();
-      this.mouse.down = false;
-      this.stick = null;
-      this.fireTouch = false;
-      this.peekTouch = false;
+      this.touches.clear();
     });
 
     surface.addEventListener('contextmenu', (e) => e.preventDefault());
-    surface.addEventListener('pointermove', (e) => {
-      if (e.pointerType === 'touch') {
-        if (this.stick && e.pointerId === this.stick.id) {
-          this.stick.x = e.clientX;
-          this.stick.y = e.clientY;
-        }
-        return;
-      }
-      this.mouse.x = e.clientX;
-      this.mouse.y = e.clientY;
-      this.mouse.active = true;
-      this.mouse.idle = 0;
-    });
     surface.addEventListener('pointerdown', (e) => {
       this.onAny();
-      if (e.pointerType === 'touch') {
-        this.enterTouch();
-        // Ľavá polovica obrazovky = páčka (kdekoľvek sa prstom dotkne).
-        if (!this.stick && e.clientX < window.innerWidth * 0.55) {
-          this.stick = {
-            id: e.pointerId,
-            ox: e.clientX,
-            oy: e.clientY,
-            x: e.clientX,
-            y: e.clientY,
-          };
-          surface.setPointerCapture(e.pointerId);
-        } else this.commands.push({ t: 'confirm' });
+      if (e.pointerType !== 'touch') {
+        this.commands.push({ t: 'tap', x: e.clientX, y: e.clientY });
         return;
       }
-      this.mouse.x = e.clientX;
-      this.mouse.y = e.clientY;
-      this.mouse.active = true;
-      this.mouse.idle = 0;
-      if (e.button === 0) this.mouse.down = true;
-      if (e.button === 2) this.lensQueued = true;
-      this.commands.push({ t: 'confirm' });
+      this.enterTouch();
+      surface.setPointerCapture(e.pointerId);
+      this.touches.set(e.pointerId, {
+        id: e.pointerId,
+        ox: e.clientX,
+        oy: e.clientY,
+        x: e.clientX,
+        y: e.clientY,
+        t: performance.now(),
+        stick: false,
+      });
+    });
+    surface.addEventListener('pointermove', (e) => {
+      const tch = this.touches.get(e.pointerId);
+      if (!tch) return;
+      tch.x = e.clientX;
+      tch.y = e.clientY;
+      // Prst, ktorý sa pohne, sa stane páčkou (ak ešte žiadna nie je).
+      if (!tch.stick && Math.hypot(tch.x - tch.ox, tch.y - tch.oy) > 12 && !this.stickTouch())
+        tch.stick = true;
     });
     const up = (e: PointerEvent) => {
-      if (e.pointerType === 'touch') {
-        if (this.stick && e.pointerId === this.stick.id) this.stick = null;
-        return;
-      }
-      if (e.button === 0) this.mouse.down = false;
+      const tch = this.touches.get(e.pointerId);
+      if (!tch) return;
+      this.touches.delete(e.pointerId);
+      if (!tch.stick && performance.now() - tch.t < 350)
+        this.commands.push({ t: 'tap', x: tch.ox, y: tch.oy });
     };
     surface.addEventListener('pointerup', up);
-    surface.addEventListener('pointercancel', up);
+    surface.addEventListener('pointercancel', (e) => this.touches.delete(e.pointerId));
+  }
+
+  private stickTouch(): Touch | undefined {
+    for (const t of this.touches.values()) if (t.stick) return t;
+    return undefined;
   }
 
   private enterTouch(): void {
     if (this.touchMode) return;
     this.touchMode = true;
-    this.mouse.active = false;
     this.onTouchMode();
   }
 
-  /** Dotykové tlačidlá: držanie (streľba, nahliadnutie) a stlačenie (úskok, šošovka). */
-  bindButton(btn: HTMLElement, kind: 'fire' | 'dash' | 'lens' | 'peek'): void {
+  /** Dotykové tlačidlo úskoku. */
+  bindDash(btn: HTMLElement): void {
     btn.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       e.stopPropagation();
       this.onAny();
       this.enterTouch();
-      btn.setPointerCapture(e.pointerId);
       btn.classList.add('down');
-      if (kind === 'fire') this.fireTouch = true;
-      else if (kind === 'peek') this.peekTouch = true;
-      else if (kind === 'dash') this.dashQueued = true;
-      else this.lensQueued = true;
-      this.commands.push({ t: 'confirm' });
+      this.dashQueued = true;
     });
-    const release = () => {
-      btn.classList.remove('down');
-      if (kind === 'fire') this.fireTouch = false;
-      if (kind === 'peek') this.peekTouch = false;
-    };
+    const release = () => btn.classList.remove('down');
     btn.addEventListener('pointerup', release);
     btn.addEventListener('pointercancel', release);
   }
@@ -160,64 +145,41 @@ export class Controls {
   clear(): void {
     this.commands = [];
     this.dashQueued = false;
-    this.lensQueued = false;
-  }
-
-  get peek(): boolean {
-    return this.keys.has('shift') || this.peekTouch || this.padButton(3);
   }
 
   /** Páčka na obrazovke (pre vykreslenie): stred a výchylka v pixeloch. */
   get stickView(): { ox: number; oy: number; x: number; y: number } | null {
-    return this.stick;
+    return this.stickTouch() ?? null;
   }
 
-  private padButton(i: number): boolean {
-    const pad = navigator.getGamepads?.().find((p) => p && p.connected);
-    return !!pad?.buttons[i]?.pressed;
-  }
-
-  /**
-   * Vstup na tento snímok. `player` = poloha hráča na obrazovke (pre mierenie myšou).
-   */
-  read(dt: number, player: { x: number; y: number }): Input {
+  read(): Input {
     const input: Input = { ...NO_INPUT };
     for (const [k, [x, y]] of Object.entries(MOVE))
       if (this.keys.has(k)) {
         input.mx += x;
         input.my += y;
       }
-    if (this.stick) {
-      const dx = this.stick.x - this.stick.ox;
-      const dy = this.stick.y - this.stick.oy;
+    input.mx = Math.max(-1, Math.min(1, input.mx));
+    input.my = Math.max(-1, Math.min(1, input.my));
+    const st = this.stickTouch();
+    if (st) {
+      const dx = st.x - st.ox;
+      const dy = st.y - st.oy;
       const d = Math.hypot(dx, dy);
       const max = 46;
-      if (d > 6) {
+      if (d > 8) {
         const k = Math.min(1, d / max) / d;
         input.mx = dx * k;
         input.my = dy * k;
       }
       // Páčka sa ťahá za prstom, keď ide príliš ďaleko.
       if (d > max * 1.4) {
-        this.stick.ox = this.stick.x - (dx / d) * max * 1.4;
-        this.stick.oy = this.stick.y - (dy / d) * max * 1.4;
+        st.ox = st.x - (dx / d) * max * 1.4;
+        st.oy = st.y - (dy / d) * max * 1.4;
       }
     }
-    this.mouse.idle += dt;
-    if (this.mouse.active && !this.touchMode) {
-      input.ax = this.mouse.x - player.x;
-      input.ay = this.mouse.y - player.y;
-      // Ak myš dlho stojí a hráč strieľa klávesnicou, mieri sa smerom pohybu.
-      if (this.mouse.idle > 2.5 && !this.mouse.down) {
-        input.ax = 0;
-        input.ay = 0;
-      }
-    }
-    input.fire = this.mouse.down || this.fireTouch || this.keys.has('j') || this.keys.has('x');
     input.dash = this.dashQueued;
-    input.lens = this.lensQueued;
     this.dashQueued = false;
-    this.lensQueued = false;
     this.readPad(input);
     return input;
   }
@@ -228,8 +190,6 @@ export class Controls {
     const dead = (v: number | undefined) => (v !== undefined && Math.abs(v) > 0.22 ? v : 0);
     const lx = dead(pad.axes[0]);
     const ly = dead(pad.axes[1]);
-    const rx = dead(pad.axes[2]);
-    const ry = dead(pad.axes[3]);
     if (lx || ly) {
       input.mx = lx;
       input.my = ly;
@@ -238,31 +198,16 @@ export class Controls {
     if (pad.buttons[15]?.pressed) input.mx = 1;
     if (pad.buttons[12]?.pressed) input.my = -1;
     if (pad.buttons[13]?.pressed) input.my = 1;
-    const aim = Math.hypot(rx, ry) > 0.35;
-    if (aim) {
-      input.ax = rx;
-      input.ay = ry;
-      input.fire = true;
-    }
-    this.padAim = aim;
     const pressed = (i: number) => !!pad.buttons[i]?.pressed;
     const edge = (i: number) => pressed(i) && !this.padPrev[i];
-    if (pressed(7) || pressed(2)) input.fire = true;
     if (edge(0)) {
       input.dash = true;
       this.commands.push({ t: 'confirm' });
     }
-    if (edge(1) || edge(6)) input.lens = true;
-    if (edge(4)) this.commands.push({ t: 'cycle', d: -1 });
-    if (edge(5)) this.commands.push({ t: 'cycle', d: 1 });
+    if (edge(4)) this.commands.push({ t: 'anchorCycle', d: -1 });
+    if (edge(5)) this.commands.push({ t: 'anchorCycle', d: 1 });
     if (edge(9)) this.commands.push({ t: 'pause' });
-    if (edge(8)) this.commands.push({ t: 'map' });
+    if (edge(8) || edge(3)) this.commands.push({ t: 'restart' });
     this.padPrev = pad.buttons.map((b) => b.pressed);
-    if (lx || ly || aim || this.padPrev.some(Boolean)) this.mouse.active = false;
-  }
-
-  /** Mieri hráč práve pravou páčkou gamepadu? */
-  get aiming(): boolean {
-    return this.padAim;
   }
 }
