@@ -12,6 +12,7 @@ export interface Template {
   /** Najmenej otočení zrkadiel / posunov bední v najkratšom riešení. */
   minRotations?: number;
   minPushes?: number;
+  minShifts?: number;
 }
 
 export const TEMPLATES: Record<string, Template> = {

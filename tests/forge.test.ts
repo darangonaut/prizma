@@ -76,6 +76,7 @@ function score(def: SectorDef, tpl: Template, cur = -Infinity): number {
   if (tpl.minRotations && rotations < tpl.minRotations)
     penalty += 200 * (tpl.minRotations - rotations);
   if (tpl.minPushes && pushes < tpl.minPushes) penalty += 200 * (tpl.minPushes - pushes);
+  if (tpl.minShifts && shifts < tpl.minShifts) penalty += 100 * (tpl.minShifts - shifts);
   const base =
     sol.steps.length * 0.5 +
     pushes * 4 +
