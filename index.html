@@ -12,7 +12,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta
       name="description"
-      content="Prizma — a neon sci-fi action mystery across four mirrored realities."
+      content="Prizma — one move, four mirrors. A neon action game where you control four mirrored copies of yourself at once."
     />
     <title>Prizma</title>
   </head>
@@ -21,37 +21,22 @@
 
     <div id="hud" hidden>
       <div class="hud-top">
-        <div class="hud-left">
-          <div class="hud-title">
-            <span class="zone"></span>
-            <span class="room-name"></span>
-          </div>
-          <div class="hud-life">
-            <span class="hp"></span>
-            <span class="inv"></span>
-          </div>
+        <div class="hud-title">
+          <span class="chap"></span>
+          <span class="lvl"></span>
         </div>
-        <div class="hud-stats">
-          <span class="logs"></span>
-          <span class="echoes"></span>
+        <div class="hud-mid">
+          <span class="time"></span>
+          <span class="shards"></span>
         </div>
         <div class="hud-buttons">
-          <button class="map-btn" aria-label="Map">▦</button>
+          <button class="restart-btn" aria-label="Restart">↻</button>
           <button class="mute" aria-label="Sound">♪</button>
           <button class="pause" aria-label="Pause">❚❚</button>
         </div>
       </div>
-      <div class="boss" hidden>
-        <div class="boss-name"></div>
-        <div class="boss-bar"><i></i></div>
-      </div>
-      <div class="realities"></div>
-      <div class="touch-buttons">
-        <button class="t-fire" aria-label="Fire">✦</button>
-        <button class="t-dash" aria-label="Dash">»</button>
-        <button class="t-lens" aria-label="Prism lens" hidden>◇</button>
-        <button class="t-peek" aria-label="Look through">◎</button>
-      </div>
+      <div class="start-hint"></div>
+      <button class="t-dash" aria-label="Dash">»</button>
     </div>
 
     <div id="toast"></div>
@@ -73,8 +58,8 @@
         <div class="spectrum"><i></i><i></i><i></i><i></i></div>
         <p class="tagline"></p>
         <div class="menu">
-          <button class="continue big" hidden></button>
-          <button class="new big"></button>
+          <button class="continue big"></button>
+          <button class="levels-btn big"></button>
         </div>
         <div class="langs">
           <button data-lang="en">EN</button>
@@ -85,38 +70,34 @@
       </div>
     </section>
 
-    <section id="confirm" class="screen dim" hidden>
-      <p class="confirm-text"></p>
-      <div class="row">
-        <button class="yes big"></button>
-        <button class="no big"></button>
-      </div>
+    <section id="levels" class="screen dim" hidden>
+      <h2 class="levels-title"></h2>
+      <div class="chapters"></div>
+      <button class="levels-back"></button>
     </section>
 
     <section id="paused" class="screen dim" hidden>
       <h2 class="paused-title"></h2>
       <button class="resume big"></button>
       <button class="restart"></button>
+      <button class="to-levels"></button>
       <button class="sound"></button>
       <button class="to-menu"></button>
       <p class="paused-controls"></p>
     </section>
 
-    <section id="map" class="screen dim" hidden>
-      <h2 class="map-title"></h2>
-      <div class="map-grid"></div>
-      <p class="map-hint"></p>
-      <button class="map-close"></button>
-    </section>
-
-    <section id="dead" class="screen" hidden>
-      <h2 class="dead-title"></h2>
-      <p class="dead-text"></p>
-    </section>
-
-    <section id="choice" class="screen dim" hidden>
-      <h2 class="choice-title"></h2>
-      <div class="choices"></div>
+    <section id="clear" class="screen dim" hidden>
+      <h2 class="clear-title"></h2>
+      <div class="clear-time"></div>
+      <div class="clear-best"></div>
+      <div class="clear-star"></div>
+      <div class="row">
+        <button class="clear-next big"></button>
+      </div>
+      <div class="row">
+        <button class="clear-retry"></button>
+        <button class="clear-levels"></button>
+      </div>
     </section>
 
     <section id="ending" class="screen" hidden>
