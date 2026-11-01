@@ -16,7 +16,14 @@ export interface Solution {
 export function solve(
   def: SectorDef,
   unlocked: number[] = [0],
-  opts: { limit?: number; goal?: (w: World) => boolean; inv?: string[]; from?: Snap } = {},
+  opts: {
+    limit?: number;
+    goal?: (w: World) => boolean;
+    inv?: string[];
+    from?: Snap;
+    /** Výťah sa ráta, len ak sú prečítané všetky záznamy a ozveny. */
+    collect?: boolean;
+  } = {},
 ): Solution | null {
   const limit = opts.limit ?? 2_000_000;
   const world = new World(def, unlocked, opts.inv ?? []);
@@ -26,7 +33,9 @@ export function solve(
   const start = world.snap();
   const seen = new Map<string, { prev: string | null; act: Action | null }>();
   const snaps = new Map<string, ReturnType<World['snap']>>();
-  const k0 = world.key();
+  const collect = !!opts.collect;
+  const allRead = () => world.ents.every((e) => (e.k !== 'log' && e.k !== 'echo') || e.on);
+  const k0 = world.key(collect);
   seen.set(k0, { prev: null, act: null });
   snaps.set(k0, start);
   let queue = [k0];
@@ -38,8 +47,9 @@ export function solve(
         world.restore(s);
         const ev = 'm' in a ? world.move(a.m) : world.shift(a.s);
         const done =
-          ev.some((e) => e.t === 'exit' || e.t === 'core') || (opts.goal?.(world) ?? false);
-        const nk = world.key();
+          (ev.some((e) => e.t === 'exit' || e.t === 'core') && (!collect || allRead())) ||
+          (opts.goal?.(world) ?? false);
+        const nk = world.key(collect);
         if (seen.has(nk) && !done) continue;
         if (!seen.has(nk)) seen.set(nk, { prev: k, act: a });
         if (done) {

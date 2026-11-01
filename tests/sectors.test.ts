@@ -36,6 +36,15 @@ describe('komory', () => {
     300_000,
   );
 
+  it.each(SECTORS.map((s, i) => [s.id, i] as const))(
+    '%s: všetky záznamy a ozveny sa dajú zozbierať',
+    (_id, i) => {
+      const sol = solve(SECTORS[i]!, unlockedAt(i), { limit: 3_000_000, collect: true });
+      expect(sol, `${SECTORS[i]!.id}: niečo je nedosiahnuteľné`).not.toBeNull();
+    },
+    300_000,
+  );
+
   it('identifikátory záznamov a ozvien sú jedinečné a majú texty vo všetkých jazykoch', () => {
     const ids: string[] = [];
     for (const s of SECTORS) {

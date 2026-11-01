@@ -571,14 +571,15 @@ export class World {
     this.update();
   }
 
-  /** Kľúč stavu pre solver (len to, čo ovplyvňuje hrateľnosť). */
-  key(): string {
+  /** Kľúč stavu pre solver (len to, čo ovplyvňuje hrateľnosť; `records` pridá záznamy a ozveny). */
+  key(records = false): string {
     let k = `${this.px},${this.py},${this.pr}|`;
     for (const e of this.ents) {
       if (e.k === 'crate') k += `${e.x},${e.y};`;
       else if (e.k === 'mirror') k += e.o;
       else if (e.k === 'switch' || e.k === 'lock' || e.k === 'item' || e.k === 'crystal')
         k += e.on ? 1 : 0;
+      else if (records && (e.k === 'log' || e.k === 'echo')) k += e.on ? 'r' : 'u';
     }
     k += '|' + [...this.unlocked].sort().join('');
     if (this.cut.length) k += '|' + [...this.cut].sort((a, b) => a - b).join(',');
