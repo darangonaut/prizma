@@ -1,74 +1,24 @@
-import type { EnemyKind, ItemId } from './types';
-
-/** Postup hráča: čo má, čo už spravil a kde naposledy uložil (terminál). */
-export interface Progress {
-  /** Posledný terminál: miestnosť, poloha a realita, kde sa hráč obnoví. */
-  room: string;
-  x: number;
-  y: number;
-  r: number;
-  unlocked: number[];
-  items: ItemId[];
-  /** Zapnuté spínače (signály platia v celej stanici). */
-  signals: string[];
-  /** Zobraté predmety, otvorené zámky (uid entity). */
-  taken: string[];
-  /** Prerezané liany (miestnosť:realita:x:y). */
-  cut: string[];
-  bosses: EnemyKind[];
-  visited: string[];
-  /** Už zobrazené úvody miestností a spúšťače. */
-  seen: string[];
-  maxHp: number;
-  logs: string[];
-  echoes: string[];
+/** Uložený postup: odomknuté úrovne, najlepšie časy, počet pokusov a nastavenia. */
+export interface SaveData {
+  /** Index najvzdialenejšej odomknutej úrovne. */
+  unlocked: number;
+  /** Najlepší čas úrovne v sekundách (podľa id). */
+  best: Record<string, number>;
   deaths: number;
-  /** Čas hrania v sekundách. */
-  time: number;
-}
-
-export interface SaveData extends Progress {
-  started: boolean;
-  endings: number[];
+  /** Už zobrazené príbehové texty. */
+  seen: string[];
+  finished: boolean;
   lang: string;
   muted: boolean;
 }
 
-const KEY = 'prizma-save-v2';
-export const START_HP = 4;
-
-export function newProgress(): Progress {
-  return {
-    room: 'k1',
-    x: 4.5,
-    y: 6.5,
-    r: 0,
-    unlocked: [0],
-    items: [],
-    signals: [],
-    taken: [],
-    cut: [],
-    bosses: [],
-    visited: [],
-    seen: [],
-    maxHp: START_HP,
-    logs: [],
-    echoes: [],
-    deaths: 0,
-    time: 0,
-  };
-}
+const KEY = 'prizma-save-v3';
 
 export function emptySave(lang = 'en'): SaveData {
-  return { ...newProgress(), started: false, endings: [], lang, muted: false };
+  return { unlocked: 0, best: {}, deaths: 0, seen: [], finished: false, lang, muted: false };
 }
 
-export interface Storage {
-  getItem(k: string): string | null;
-  setItem(k: string, v: string): void;
-}
-
-export function loadSave(store: Storage | null, lang = 'en'): SaveData {
+export function loadSave(store: Storage | null, lang: string): SaveData {
   try {
     const raw = store?.getItem(KEY);
     if (!raw) return emptySave(lang);
@@ -83,11 +33,22 @@ export function writeSave(store: Storage | null, data: SaveData): void {
   try {
     store?.setItem(KEY, JSON.stringify(data));
   } catch {
-    // Súkromné okno alebo plné úložisko — hra ide ďalej bez ukladania.
+    // Úložisko môže byť plné alebo zakázané; hra beží ďalej bez ukladania.
   }
 }
 
-/** Ktoré konce sú dostupné: tretí len so všetkými ozvenami. */
-export function endingAvailable(choice: number, echoes: number, totalEchoes: number): boolean {
-  return choice < 2 || echoes >= totalEchoes;
+/** Zapíše dokončenie úrovne: odomkne ďalšiu a uloží lepší čas. Vráti true pri novom rekorde. */
+export function recordWin(
+  save: SaveData,
+  index: number,
+  id: string,
+  time: number,
+  count: number,
+): boolean {
+  save.unlocked = Math.max(save.unlocked, Math.min(count - 1, index + 1));
+  if (index === count - 1) save.finished = true;
+  const old = save.best[id];
+  if (old !== undefined && old <= time) return false;
+  save.best[id] = Math.round(time * 100) / 100;
+  return true;
 }

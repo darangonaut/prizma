@@ -1,334 +1,235 @@
 import { describe, expect, it } from 'vitest';
-import { ROOMS } from '@/game/rooms';
-import { newProgress, type Progress } from '@/game/save';
-import { Sim } from '@/game/sim';
-import { NO_INPUT, ROOM_H, ROOM_W, type Input, type RoomDef } from '@/game/types';
+import { LEVELS } from '@/game/levels';
+import { emptySave, recordWin } from '@/game/save';
+import { CHASER_WAKE, Sim, blinkPhase } from '@/game/sim';
+import { mirror, type Ev, type LevelDef } from '@/game/types';
 
-/** Doplní riadky stenami na rozmer miestnosti. */
-function pad(rows: string[]): string[] {
-  const out = rows.map((r) => r.padEnd(ROOM_W, '#'));
-  while (out.length < ROOM_H) out.push('#'.repeat(ROOM_W));
-  return out;
+const OPEN = [
+  '###########',
+  '#.........#',
+  '#.........#',
+  '#.........#',
+  '#.........#',
+  '#....@....#',
+  '#.........#',
+  '#.........#',
+  '#.........#',
+  '#........*#',
+  '###########',
+];
+
+/** Úroveň z okien; prázdne miesta v mape doplní otvorená miestnosť. */
+function level(...panels: { r: number; map?: string[] }[]): LevelDef {
+  return {
+    id: 'test',
+    chapter: 0,
+    par: 10,
+    panels: panels.map((p) => ({ r: p.r, map: p.map ?? OPEN })),
+  };
 }
 
-function room(
-  layers: (string[] | null)[],
-  extra: Partial<RoomDef> = {},
-  id = 't',
-  mx = 0,
-): RoomDef {
-  return { id, zone: 'kryo', mx, my: 0, layers: layers.map((l) => l && pad(l)), ...extra };
-}
-
-function sim(defs: RoomDef[], prog: Partial<Progress> = {}): Sim {
-  return new Sim(defs, {
-    ...newProgress(),
-    room: defs[0]!.id,
-    x: 1.5,
-    y: 1.5,
-    ...prog,
-  });
-}
-
-const run = (s: Sim, input: Partial<Input>, seconds: number) => {
-  const evs = [];
-  for (let t = 0; t < seconds; t += 1 / 60) evs.push(...s.step(1 / 60, { ...NO_INPUT, ...input }));
-  return evs;
-};
-
-describe('pohyb a presun', () => {
-  it('chodí po podlahe a zastaví sa o stenu', () => {
-    const s = sim([room([['#######', '#.....#', '#######']])]);
-    run(s, { mx: 1 }, 2);
-    expect(s.p.x).toBeGreaterThan(5.5);
-    expect(s.p.x).toBeLessThan(6);
-    run(s, { my: -1 }, 1);
-    expect(s.p.y).toBeCloseTo(1.3, 1);
-  });
-
-  it('presun len do naladenej reality a na voľné miesto', () => {
-    const s = sim(
-      [
-        room([
-          ['#######', '#.....#', '#######'],
-          ['#######', '##,,,,#', '#######'],
-        ]),
-      ],
-      { unlocked: [0] },
-    );
-    expect(s.step(1 / 60, { ...NO_INPUT, shift: 1 })).toContainEqual({
-      t: 'shiftBlocked',
-      r: 1,
-      why: 'locked',
-    });
-    s.prog.unlocked.push(1);
-    expect(s.step(1 / 60, { ...NO_INPUT, shift: 1 })).toContainEqual({
-      t: 'shiftBlocked',
-      r: 1,
-      why: 'solid',
-    });
-    run(s, { mx: 1 }, 0.4);
-    expect(s.step(1 / 60, { ...NO_INPUT, shift: 1 })).toContainEqual({ t: 'shift', r: 1 });
-    expect(s.p.r).toBe(1);
-  });
-
-  it('presun na miesto nepriateľa ho roztrhne', () => {
-    const s = sim(
-      [
-        room([
-          ['#######', '#.....#', '#######'],
-          ['#######', '#,c,,,#', '#######'],
-        ]),
-      ],
-      { unlocked: [0, 1], x: 2.5 },
-    );
-    const crawler = s.enemies[0]!;
-    crawler.x = 2.5;
-    crawler.y = 1.5;
-    const ev = s.step(1 / 60, { ...NO_INPUT, shift: 1 });
-    expect(ev.some((e) => e.t === 'telefrag')).toBe(true);
-    expect(ev.some((e) => e.t === 'kill')).toBe(true);
-    expect(s.enemies.length).toBe(0);
-  });
-
-  it('prechod do susednej miestnosti cez otvor', () => {
-    // Otvor v riadku 1 na spoločnom okraji.
-    const a = room([['#', '#' + '.'.repeat(ROOM_W - 1)]], {}, 'a', 0);
-    const b = room([['#', '.....#']], {}, 'b', 1);
-    const s = sim([a, b]);
-    const ev = run(s, { mx: 1 }, 6);
-    expect(ev).toContainEqual({ t: 'room', id: 'b', first: true });
-    expect(s.room.def.id).toBe('b');
-    expect(s.prog.visited).toContain('b');
-  });
-});
-
-describe('boj', () => {
-  it('strely zasiahnu len nepriateľa v rovnakej realite', () => {
-    const def = room([
-      ['#############', '#...........#', '#############'],
-      ['#############', '#,,,,,,,c,,,#', '#############'],
-    ]);
-    const s = sim([def], { unlocked: [0, 1] });
-    const enemy = s.enemies[0]!;
-    enemy.t = 99;
-    run(s, { fire: true, ax: 1 }, 1);
-    expect(enemy.hp).toBe(enemy.max);
-    s.step(1 / 60, { ...NO_INPUT, shift: 1 });
-    run(s, { fire: true, ax: 1 }, 1.5);
-    expect(s.enemies.length).toBe(0);
-  });
-
-  it('nepriateľská strela z inej reality neublíži, z rovnakej áno', () => {
-    const s = sim([room([['#############', '#...........#', '#############'], null])], {
-      unlocked: [0, 1],
-    });
-    s.fire({ x: 8.5, y: 1.5 }, 1, Math.PI, 6);
-    run(s, {}, 2);
-    expect(s.p.hp).toBe(s.prog.maxHp);
-    s.fire({ x: 8.5, y: 1.5 }, 0, Math.PI, 6);
-    const ev = run(s, {}, 2);
-    expect(ev.some((e) => e.t === 'hurt')).toBe(true);
-    expect(s.p.hp).toBe(s.prog.maxHp - 1);
-  });
-
-  it('úskok prejde cez strely', () => {
-    const s = sim([room([['#############', '#...........#', '#############']])]);
-    s.fire({ x: 3.2, y: 1.5 }, 0, Math.PI, 6);
-    run(s, { mx: 1, dash: true }, 0.1);
-    run(s, {}, 1);
-    expect(s.p.hp).toBe(s.prog.maxHp);
-  });
-
-  it('smrť a obnova pri termináli', () => {
-    const s = sim([room([['#########', '#.......#', '#T#######']])], { x: 1.5 });
-    const ev = run(s, {}, 0.1);
-    expect(ev).toContainEqual({ t: 'save' });
-    run(s, { mx: 1 }, 1);
-    s.p.hp = 1;
-    s.fire({ x: 7.5, y: 1.5 }, 0, Math.PI, 6);
-    expect(run(s, {}, 2)).toContainEqual({ t: 'death' });
-    s.respawn();
-    expect(s.p.hp).toBe(s.prog.maxHp);
-    expect(s.p.x).toBeCloseTo(1.5, 1);
-    expect(s.prog.deaths).toBe(1);
-  });
-});
-
-describe('zariadenia a predmety', () => {
-  it('spínač zasiahnutý strelou otvorí dvere v inej realite', () => {
-    const s = sim(
-      [
-        room(
-          [
-            ['#########', '#.....S.#', '#.......#', '###D#####', '#.......#'],
-            ['#########', '#,,,,,,,#', '#,,,,,,,#', '###D#####', '#,,,,,,,#'],
-          ],
-          {
-            legend: {
-              S: { k: 'switch', sig: 'x' },
-              D: { k: 'door', sig: 'x', all: false },
-            },
-          },
-        ),
-      ],
-      { unlocked: [0, 1], r: 1, x: 3.5, y: 2.5 },
-    );
-    expect(s.room.walkable(1, 3, 3)).toBe(false);
-    s.step(1 / 60, { ...NO_INPUT, shift: 0 });
-    const ev = run(s, { fire: true, ax: 1, ay: -0.33 }, 1);
-    expect(ev.some((e) => e.t === 'switch')).toBe(true);
-    expect(s.room.walkable(1, 3, 3)).toBe(true);
-    expect(s.prog.signals).toContain('x');
-  });
-
-  it('čerpadlo vypustí vodu', () => {
-    const def = room([['#######', '#..~~.#', '#######']], { drain: 'pump' });
-    const s = sim([def]);
-    expect(s.room.walkable(0, 3, 1)).toBe(false);
-    s.prog.signals.push('pump');
-    expect(s.room.walkable(0, 3, 1)).toBe(true);
-  });
-
-  it('liany prereže až rezačka', () => {
-    const s = sim([room([['#########', '#...%...#', '#########']])]);
-    const ev = run(s, { fire: true, ax: 1 }, 0.5);
-    expect(ev.some((e) => e.t === 'needItem')).toBe(true);
-    expect(s.room.tile(0, 4, 1)).toBe('%');
-    s.prog.items.push('cutter');
-    expect(run(s, { fire: true, ax: 1 }, 0.5).some((e) => e.t === 'cut')).toBe(true);
-    expect(s.room.walkable(0, 4, 1)).toBe(true);
-    expect(s.prog.cut).toContain('t:0:4:1');
-  });
-
-  it('zámok otvorí karta', () => {
-    const s = sim([room([['#########', '#..L....#', '#########']])]);
-    run(s, { mx: 1 }, 1);
-    expect(s.p.x).toBeLessThan(3);
-    s.prog.items.push('card');
-    expect(run(s, { mx: 1 }, 1)).toContainEqual({ t: 'open' });
-    run(s, { mx: 1 }, 1);
-    expect(s.p.x).toBeGreaterThan(5);
-  });
-
-  it('lúč blokuje cestu, kým ho spínač nevypne', () => {
-    const s = sim(
-      [
-        room([['#########', '#...E...#', '#.......#', '#.......#', '#...S...#', '#########']], {
-          legend: {
-            E: { k: 'emitter', dir: 2, sig: 'b' },
-            S: { k: 'switch', sig: 'b' },
-          },
-        }),
-      ],
-      { x: 1.5, y: 2.5 },
-    );
-    expect(s.room.walkable(0, 4, 2)).toBe(false);
-    run(s, { mx: 1 }, 2);
-    expect(s.p.x).toBeLessThan(4);
-    s.prog.signals.push('b');
-    s.room.updateBeams();
-    run(s, { mx: 1 }, 2);
-    expect(s.p.x).toBeGreaterThan(5);
-  });
-
-  it('kryštál naladí realitu, záznam sa prečíta raz', () => {
-    const s = sim(
-      [
-        room([['#########', '#..C.l..#', '#########']], {
-          legend: { C: { k: 'crystal', reality: 2 }, l: { k: 'log', id: 'kryo-pod' } },
-        }),
-      ],
-      {},
-    );
-    const ev = run(s, { mx: 1 }, 2);
-    expect(ev).toContainEqual({ t: 'unlock', r: 2 });
-    expect(ev).toContainEqual({ t: 'read', kind: 'log', id: 'kryo-pod' });
-    expect(s.prog.unlocked).toContain(2);
-    run(s, { mx: -1 }, 1);
-    expect(run(s, { mx: 1 }, 2).some((e) => e.t === 'read')).toBe(false);
-  });
-});
-
-/** Boj s bossom: hráč je nezraniteľný, mieri na bossa a presúva sa do jeho reality. */
-function fight(id: string, seconds: number): { s: Sim; won: boolean } {
-  const def = ROOMS.find((r) => r.id === id)!;
-  const s = new Sim(ROOMS, {
-    ...newProgress(),
-    room: id,
-    x: 10.5,
-    y: 9.5,
-    unlocked: [0, 1, 2, 3],
-    items: ['lens'],
-  });
-  expect(s.room.def).toBe(def);
-  for (let t = 0; t < seconds; t += 1 / 60) {
-    s.p.inv = 1;
-    const boss = s.enemies.find((e) => e.boss);
-    if (!boss) return { s, won: true };
-    const target = boss.kind === 'heart' ? boss.warn : boss.r;
-    const ax = boss.x - s.p.x;
-    const ay = boss.y - s.p.y;
-    s.step(1 / 60, {
-      ...NO_INPUT,
-      ax,
-      ay,
-      fire: true,
-      lens: true,
-      shift: target !== s.p.r && s.p.shiftCd <= 0 ? target : null,
-    });
+function run(sim: Sim, time: number, mx = 0, my = 0, dash = false): Ev[] {
+  const ev: Ev[] = [];
+  let first = true;
+  for (let t = 0; t < time - 1e-9; t += 1 / 60) {
+    ev.push(...sim.step(1 / 60, { mx, my, dash: dash && first }));
+    first = false;
   }
-  return { s, won: !s.enemies.some((e) => e.boss) };
+  return ev;
 }
 
-describe('bossovia', () => {
-  it('strážca reaktora padne a nechá kryštál Nuly', () => {
-    const { s, won } = fight('r5', 120);
-    expect(won).toBe(true);
-    expect(s.prog.bosses).toContain('warden');
-    expect(s.room.ents.some((e) => e.spec.k === 'crystal' && s.room.present(e))).toBe(true);
-    expect(s.room.walkable(0, 10, 11)).toBe(true);
+describe('zrkadlenie', () => {
+  it('každá realita zrkadlí pohyb inak', () => {
+    expect(mirror(0, 1, 0)).toEqual([1, 0]);
+    expect(mirror(1, 1, 0)).toEqual([-1, 0]);
+    expect(mirror(1, 0, 1)).toEqual([0, 1]);
+    expect(mirror(2, 1, 0)).toEqual([0, 1]);
+    expect(mirror(2, 0, -1)).toEqual([-1, 0]);
+    expect(mirror(3, 1, 0)).toEqual([0, -1]);
+    expect(mirror(3, 0, 1)).toEqual([-1, 0]);
   });
 
-  it('srdce Prizmy padne a odhalí jadro', () => {
-    const { s, won } = fight('c5', 180);
-    expect(won).toBe(true);
-    expect(s.room.ents.some((e) => e.spec.k === 'core' && s.room.present(e))).toBe(true);
+  it('jeden vstup posunie štyri kópie štyrmi smermi', () => {
+    const sim = new Sim(level({ r: 0 }, { r: 1 }, { r: 2 }, { r: 3 }));
+    run(sim, 0.4, 1, 0);
+    const [p, h, j, n] = sim.panels;
+    expect(p!.x).toBeGreaterThan(6);
+    expect(h!.x).toBeLessThan(5);
+    expect(j!.y).toBeGreaterThan(6);
+    expect(n!.y).toBeLessThan(5);
+    expect(j!.x).toBeCloseTo(5.5);
   });
 });
 
-describe('nepriatelia v miestnostiach', () => {
-  it.each(ROOMS.map((r) => r.id))('%s: 20 s bez chýb, nikto nevojde do steny', (id) => {
-    const def = ROOMS.find((r) => r.id === id)!;
-    const s = new Sim(ROOMS, {
-      ...newProgress(),
-      room: id,
-      x: 10.5,
-      y: 6.5,
-      unlocked: [0, 1, 2, 3],
-    });
-    // Hráč stojí na voľnom mieste niekde v strede.
-    outer: for (let y = 5; y < 8; y++)
-      for (let x = 2; x < 19; x++)
-        if (s.boxFree(0, x + 0.5, y + 0.5, 0.3)) {
-          s.p.x = x + 0.5;
-          s.p.y = y + 0.5;
-          break outer;
-        }
-    for (let t = 0; t < 20; t += 1 / 30) {
-      s.p.inv = 1;
-      s.step(1 / 30, NO_INPUT);
-      for (const e of s.enemies) {
-        expect(Number.isFinite(e.x) && Number.isFinite(e.y), `${def.id} ${e.kind}`).toBe(true);
-        expect(e.x > 0 && e.y > 0 && e.x < ROOM_W && e.y < ROOM_H, `${def.id} ${e.kind}`).toBe(
-          true,
-        );
-        if (!e.boss && e.r >= 0)
-          expect(s.boxFree(e.r, e.x, e.y, e.rad * 0.8, true), `${def.id} ${e.kind} v stene`).toBe(
-            true,
-          );
+describe('pohyb', () => {
+  it('kópia pred stenou stojí, kým sa ostatné hýbu', () => {
+    const wall = [...OPEN];
+    wall[5] = '#####@....#';
+    const sim = new Sim(level({ r: 0, map: wall }, { r: 1 }));
+    run(sim, 0.5, -1, 0);
+    expect(sim.panels[0]!.x).toBeCloseTo(5.3, 2);
+    expect(sim.panels[1]!.x).toBeGreaterThan(6.5);
+  });
+
+  it('zakotvená kópia stojí, ostatné sa hýbu', () => {
+    const sim = new Sim(level({ r: 0 }, { r: 1 }));
+    expect(sim.toggleAnchor(1)).toEqual([{ t: 'anchor', p: 1 }]);
+    run(sim, 0.4, 1, 0);
+    expect(sim.panels[0]!.x).toBeGreaterThan(6);
+    expect(sim.panels[1]!.x).toBeCloseTo(5.5);
+    sim.toggleAnchor(1);
+    expect(sim.anchor).toBe(-1);
+  });
+
+  it('s jedinou kópiou sa kotviť nedá', () => {
+    const sim = new Sim(level({ r: 0 }));
+    expect(sim.toggleAnchor(0)).toEqual([]);
+  });
+
+  it('kĺže do chodby širokej jednu dlaždicu aj pri nepresnom zarovnaní', () => {
+    const map = [...OPEN];
+    map[4] = '#####.#####';
+    map[3] = '#####.#####';
+    const sim = new Sim(level({ r: 0, map }));
+    sim.panels[0]!.x = 5.75;
+    run(sim, 0.8, 0, -1);
+    expect(sim.panels[0]!.y).toBeLessThan(3.6);
+  });
+});
+
+describe('nebezpečenstvá', () => {
+  it('bodce zabijú, úskok ich preskočí', () => {
+    const map = [...OPEN];
+    map[4] = '#^^^^^^^^^#';
+    const a = new Sim(level({ r: 0, map }));
+    const ev = run(a, 0.5, 0, -1);
+    expect(ev.find((e) => e.t === 'death')).toMatchObject({ cause: 'spike' });
+    const b = new Sim(level({ r: 0, map }));
+    run(b, 0.25, 0, -1, true);
+    expect(b.dead).toBe(false);
+    expect(b.panels[0]!.y).toBeLessThan(4);
+  });
+
+  it('smrť jednej kópie ukončí pokus všetkým', () => {
+    const map = [...OPEN];
+    map[5] = '#...^@....#';
+    const sim = new Sim(level({ r: 0 }, { r: 1, map }));
+    // Hlbina zrkadlí: vstup vpravo ju pošle vľavo na bodce.
+    const ev = run(sim, 0.5, 1, 0);
+    expect(ev.filter((e) => e.t === 'death')).toEqual([expect.objectContaining({ p: 1 })]);
+    expect(sim.dead).toBe(true);
+    expect(sim.step(1, { mx: 1, my: 0, dash: false })).toEqual([]);
+  });
+
+  it('píla chodí od steny ku stene a zabije', () => {
+    const map = [...OPEN];
+    map[5] = '#h...@....#';
+    const sim = new Sim(level({ r: 0, map }));
+    const ev = run(sim, 3);
+    expect(ev.find((e) => e.t === 'death')).toMatchObject({ cause: 'saw' });
+  });
+
+  it('laser zabije len keď svieti', () => {
+    const map = [...OPEN];
+    map[5] = '>....@....#';
+    const sim = new Sim(level({ r: 0, map }));
+    run(sim, 1.7);
+    expect(sim.dead).toBe(false);
+    const ev = run(sim, 0.3);
+    expect(ev.find((e) => e.t === 'death')).toMatchObject({ cause: 'laser' });
+  });
+
+  it('veža strieľa na kópiu', () => {
+    const map = [...OPEN];
+    map[5] = 'T....@....#';
+    const sim = new Sim(level({ r: 0, map }));
+    const ev = run(sim, 4);
+    expect(ev.some((e) => e.t === 'fire')).toBe(true);
+    expect(ev.find((e) => e.t === 'death')).toMatchObject({ cause: 'shot' });
+  });
+
+  it('utopenec sa prebudí a ide za kópiou', () => {
+    const map = [...OPEN];
+    map[1] = '#g........#';
+    const sim = new Sim(level({ r: 0, map }));
+    run(sim, CHASER_WAKE - 0.1);
+    expect(sim.panels[0]!.chasers[0]!.x).toBeCloseTo(1.5);
+    const ev = run(sim, 6);
+    expect(ev.find((e) => e.t === 'death')).toMatchObject({ cause: 'chaser' });
+  });
+
+  it('mihotavá podlaha na chvíľu zmizne', () => {
+    const map = [...OPEN];
+    map[5] = '#...:@....#';
+    const sim = new Sim(level({ r: 0, map }));
+    sim.panels[0]!.x = 4.5;
+    let t = 0;
+    while (blinkPhase(':', t) !== 'on') t += 0.05;
+    run(sim, t - 0.1);
+    expect(sim.dead).toBe(false);
+    const ev = run(sim, 0.3);
+    expect(ev.find((e) => e.t === 'death')).toMatchObject({ cause: 'void' });
+  });
+});
+
+describe('úlomky', () => {
+  it('po zobratí všetkých je úroveň hotová', () => {
+    const map = [...OPEN];
+    map[9] = '#.........#';
+    map[5] = '#....@.*..#';
+    const sim = new Sim(level({ r: 0, map }));
+    const ev = run(sim, 1, 1, 0);
+    expect(ev.filter((e) => e.t === 'shard')).toHaveLength(1);
+    expect(ev.find((e) => e.t === 'win')).toBeTruthy();
+    expect(sim.won).toBe(true);
+  });
+
+  it('úlomky ďalšej vlny sa dajú zobrať až po predošlej', () => {
+    const map = [...OPEN];
+    map[9] = '#.........#';
+    map[5] = '#.2..@.*..#';
+    const sim = new Sim(level({ r: 0, map }));
+    run(sim, 0.8, -1, 0);
+    expect(sim.taken()).toBe(0);
+    const ev = run(sim, 1.6, 1, 0);
+    expect(ev.find((e) => e.t === 'wave')).toEqual({ t: 'wave', n: 1 });
+    run(sim, 2, -1, 0);
+    expect(sim.won).toBe(true);
+  });
+
+  it('srdce strieľa kruhy', () => {
+    const heart = LEVELS.find((l) => l.id === 'heart')!;
+    const sim = new Sim(heart);
+    const ev = run(sim, 1.2);
+    expect(ev.filter((e) => e.t === 'fire').length).toBe(4);
+    expect(sim.panels[0]!.bullets.length).toBeGreaterThanOrEqual(8);
+  });
+});
+
+describe('úrovne bežia', () => {
+  it('každá úroveň vydrží 10 s bez chyby', () => {
+    for (const l of LEVELS) {
+      const sim = new Sim(l);
+      for (let i = 0; i < 600 && !sim.dead; i++)
+        sim.step(1 / 60, { mx: Math.sin(i / 20), my: Math.cos(i / 31), dash: i % 90 === 0 });
+      for (const p of sim.panels) {
+        expect(Number.isFinite(p.x + p.y), l.id).toBe(true);
+        for (const c of p.chasers) expect(p.boxFree(c.x, c.y, 0.29), l.id).toBe(true);
+        expect(p.boxFree(p.x, p.y, 0.29), l.id).toBe(true);
       }
     }
-    expect(s.room.def.id).toBe(id);
+  });
+});
+
+describe('uloženie', () => {
+  it('výhra odomkne ďalšiu úroveň a uloží lepší čas', () => {
+    const save = emptySave();
+    expect(recordWin(save, 0, 'p1', 20, 5)).toBe(true);
+    expect(save.unlocked).toBe(1);
+    expect(recordWin(save, 0, 'p1', 25, 5)).toBe(false);
+    expect(save.best.p1).toBe(20);
+    recordWin(save, 4, 'x', 9, 5);
+    expect(save.finished).toBe(true);
+    expect(save.unlocked).toBe(4);
   });
 });
