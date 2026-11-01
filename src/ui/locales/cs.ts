@@ -5,30 +5,24 @@ export const cs: Locale = {
     tagline: 'Jedna stanice. Čtyři reality. Jediná cesta ven.',
     newGame: 'Nová hra',
     continue: 'Pokračovat',
-    chambers: 'Komory',
     back: 'Zpět',
     sound: 'Zvuk',
     on: 'zap.',
     off: 'vyp.',
     controlsKeys:
-      'Pohyb: šipky / WASD · Přesun do reality: 1–4 nebo Q / E · Nahlédnout: drž mezerník · Zpět: Z · Restart: R · Nápověda: H',
-    controlsTouch: 'Švihni nebo použij ovladač · Ťukni na realitu pro přesun · Drž ◎ a nahlédneš',
-    hintThinking: 'Přemýšlím…',
-    hintNone: 'Odsud už to nejde. Vrať tah nebo restartuj.',
+      'Pohyb: WASD / šipky · Míření: myš · Střelba: klik nebo J · Úskok: mezerník · Přesun do reality: 1–4 nebo Q / E · Nahlédnout: drž Shift · Hranolová čočka: pravé tlačítko nebo L · Mapa: M',
+    controlsTouch:
+      'Levý palec: pohyb · ✦ střelba (míří sama) · » úskok · Ťukni na realitu pro přesun · Drž ◎ a nahlédneš',
     paused: 'Pauza',
     resume: 'Pokračovat',
-    restart: 'Restartovat komoru',
+    toTerminal: 'Zpět k poslednímu terminálu',
     menu: 'Hlavní menu',
-    undo: 'Zpět',
-    moves: 'Tahy',
-    chamber: 'Komora',
-    cleared: 'Komora dokončena',
-    clearedMoves: '{n} tahů',
-    best: 'nejlépe {n}',
-    next: 'Pokračovat',
-    logs: 'Záznamy',
-    echoes: 'Ozvěny',
-    locked: 'Zamčeno',
+    map: 'Mapa stanice',
+    mapHint:
+      'Terminály ▣ ukládají postup. Z místnosti s terminálem se dá přesunout k libovolnému jinému terminálu.',
+    mapTravel: 'Vyber terminál ▣, ke kterému se přesuneš.',
+    dead: 'Signál ztracen',
+    deadText: 'Obnova u posledního terminálu…',
     newGameConfirm: 'Začít znovu? Postup se smaže.',
     yes: 'Ano',
     no: 'Ne',
@@ -41,34 +35,47 @@ export const cs: Locale = {
     zone_hydro: 'Hydroponie',
     zone_reactor: 'Reaktor',
     zone_core: 'Jádro Prizmy',
-    ch_wake: 'Probuzení',
-    ch_rift: 'První trhlina',
-    ch_weave: 'Dvě chodby',
-    ch_crosswire: 'Zkřížené rozvody',
-    ch_pump: 'Čerpací stanice',
-    ch_double: 'Dvojité dno',
-    ch_amber: 'Jantarová zahrada',
-    ch_twin: 'Provázání',
-    ch_bundle: 'Svazek',
-    ch_beam: 'Horké světlo',
-    ch_phase: 'Fázové okno',
-    ch_shadow: 'Hra stínů',
-    ch_null: 'Nula',
-    ch_interference: 'Interference',
-    ch_heart: 'Srdce Prizmy',
+    room_k1: 'Kryokapsle',
+    room_k2: 'Servisní chodba',
+    room_k3: 'Laboratoř',
+    room_k4: 'Zatopená křižovatka',
+    room_h1: 'Obytný prstenec',
+    room_h2: 'Jídelna',
+    room_h3: 'Čerpací stanice',
+    room_h4: 'Šatny',
+    room_h5: 'Byt ředitelky',
+    room_y1: 'Brána hydroponie',
+    room_y2: 'Zahrada',
+    room_y3: 'Houština',
+    room_y4: 'Trezor semen',
+    room_y5: 'Velký strom',
+    room_r1: 'Brána reaktoru',
+    room_r2: 'Cívková hala',
+    room_r3: 'Komora čočky',
+    room_r4: 'Řídicí místnost',
+    room_r5: 'Výtah do jádra',
+    room_c1: 'Přístup k jádru',
+    room_c2: 'Archiv',
+    room_c3: 'Interference',
+    room_c4: 'Síň ozvěn',
+    room_c5: 'Srdce Prizmy',
+    boss_warden: 'Strážce reaktoru',
+    boss_heart: 'Srdce Prizmy',
     blockedLocked: 'Tahle realita ještě není naladěná.',
     blockedSolid: 'V realitě {r} tu něco stojí.',
-    blockedBeam: 'V realitě {r} tudy vede paprsek.',
     needCard: 'Zamčeno. Je potřeba přístupová karta.',
-    needCutter: 'Zarostlé. Je potřeba něco ostrého.',
-    gotCard: 'Přístupová karta',
-    gotCutter: 'Plazmová řezačka',
+    needCutter: 'Živé dřevo. Pulz ho nepřeřízne.',
+    got_card: 'Přístupová karta',
+    got_cutter: 'Plazmová řezačka — střely propálí liány',
+    got_lens: 'Hranolová čočka',
+    gotHealth: 'Odolnost +1',
     tunedReality: 'Naladěná realita: {r}',
-    tapToContinue: 'ťukni nebo stiskni Enter',
+    saved: 'Postup uložen',
     endingTitle0: 'Kolaps',
     endingTitle1: 'Kotva',
     endingTitle2: 'Interference',
-    endingStats: 'Nalezené ozvěny: {e} / {et} · Přečtené záznamy: {l} / {lt} · Tahy: {m}',
+    endingStats:
+      'Nalezené ozvěny: {e} / {et} · Přečtené záznamy: {l} / {lt} · Čas: {m} min · Ztracené signály: {d}',
     endingAgain: 'Zpět do menu',
     choose: 'Co uděláš?',
     choice0: 'Zavřít Prizmu',
@@ -82,7 +89,7 @@ export const cs: Locale = {
       who: 'HALO',
       pages: [
         'Kryocyklus přerušen. Dobré ráno, T-7.',
-        'Stanice se teď… těžko popisuje. Pokračuj prosím k východu z kryokomory.',
+        'Stanice se teď… těžko popisuje. Ostraha je pořád v režimu uzávěry. Pokračuj prosím na východ. Opatrně.',
       ],
     },
     'kryo-pod': {
@@ -99,9 +106,12 @@ export const cs: Locale = {
         'Od testu Lom-1 hlásí moje senzory čtyři verze každé místnosti. Rozhodla jsem se hlásit jen jednu.',
       ],
     },
-    'hint-push': {
+    'hint-combat': {
       who: 'HALO',
-      pages: ['Bedny se dají tlačit. Tlaková deska drží dveře otevřené, dokud na ní něco leží.'],
+      pages: [
+        'Strážní drony. Pořád si myslí, že platí uzávěra a vetřelec jsi ty.',
+        'Multinástroj střílí pulz: miř myší a klikni, nebo stiskni J. Mezerník je úskok — během něj tebou střely projdou.',
+      ],
     },
     'rift-intro': {
       who: 'HALO',
@@ -111,12 +121,9 @@ export const cs: Locale = {
       who: 'HALO',
       pages: [
         'Ten úlomek je část Prizmy. Rezonuje s… jinou stanicí. Tytéž místnosti. Zatopené.',
-        'Stiskni 2 a přejdeš na druhou stranu, 1 tě vrátí zpět. Přesunout se dá jen tam, kde je v druhé realitě volno.',
+        'Stiskni 2 a přejdeš na druhou stranu, 1 tě vrátí zpět. Přesunout se dá jen tam, kde je v druhé realitě volno. Podrž Shift a nejdřív nahlédni.',
+        'Co existuje v jedné realitě, na tebe v jiné nedosáhne. Ani jeho střely. A když se přesuneš na místo, kde tam něco stojí… dlouho stát nebude.',
       ],
-    },
-    'hint-shift': {
-      who: 'HALO',
-      pages: ['Podrž mezerník (nebo ◎) a nahlédneš do ostatních realit dřív, než přejdeš.'],
     },
     'kryo-lab': {
       who: 'DR. VERA SUNDOVÁ',
@@ -127,7 +134,7 @@ export const cs: Locale = {
     },
     'weave-intro': {
       who: 'HALO',
-      pages: ['Žádná verze téhle chodby nevede až na konec. Společně by mohly.'],
+      pages: ['Ani jedna verze téhle křižovatky nevede až na konec. Spolu by mohly.'],
     },
     'kryo-crew': {
       who: 'INŽENÝRKA MIRA KASKOVÁ',
@@ -139,7 +146,8 @@ export const cs: Locale = {
     'habitat-intro': {
       who: 'HALO',
       pages: [
-        'Obytný prstenec. Rozvody jsou společné pro všechny reality — deska v jednom světě otevře dveře v jiném.',
+        'Obytný prstenec. Rozvody jsou společné pro všechny reality — spínač v jednom světě otevře dveře v jiném.',
+        'Spínač přepneš výstřelem.',
       ],
     },
     'echo-drowned': {
@@ -151,7 +159,9 @@ export const cs: Locale = {
     },
     'pump-intro': {
       who: 'HALO',
-      pages: ['Zatopený prstenec má ještě funkční čerpadlo. Je zapojené na tuhle stranu.'],
+      pages: [
+        'Zatopený prstenec má ještě funkční čerpadlo. Když ho spustíš, voda by měla odtéct z celého prstence.',
+      ],
     },
     'habitat-vera': {
       who: 'DR. VERA SUNDOVÁ',
@@ -163,10 +173,6 @@ export const cs: Locale = {
     'echo-pump': {
       who: 'OZVĚNA · HLUBINA',
       pages: ['Karta je pořád ve skříňce. Čerpadla by nás zachránila. Nikdo na ně neměl čas.'],
-    },
-    'double-intro': {
-      who: 'HALO',
-      pages: ['Dvě desky, dva světy, jedny dveře. Obě musí být stisknuté najednou.'],
     },
     'habitat-crew': {
       who: 'BOTANIK ILAN OKAFOR',
@@ -186,6 +192,10 @@ export const cs: Locale = {
         'Stiskni 3 a přejdeš.',
       ],
     },
+    'vines-intro': {
+      who: 'HALO',
+      pages: ['Jantarová strana měla staletí na to, aby rostla. Pulz živé dřevo nepřeřízne.'],
+    },
     'echo-elder1': {
       who: 'OZVĚNA · JANTAR',
       pages: [
@@ -193,26 +203,22 @@ export const cs: Locale = {
         'Řezačka je tam, kde zůstala. Liány dorůstají, ale pomalu.',
       ],
     },
+    'item-cutter': {
+      who: 'HALO',
+      pages: ['Plazmová řezačka. Střely teď propálí liány.'],
+    },
     'hydro-botanist': {
       who: 'BOTANIK ILAN OKAFOR',
       pages: [
         'Rajčata v truhlíku 6 v jedné realitě plodí a v druhé jsou prach. Stejné semeno. Stejná hodina.',
       ],
     },
-    'twin-intro': {
-      who: 'HALO',
-      pages: [
-        'Tahle bedna je provázaná. Je ve všech realitách najednou a hýbe se ve všech zároveň.',
-        'Pohne se, jen když má místo všude.',
-      ],
-    },
     'echo-elder2': {
       who: 'OZVĚNA · JANTAR',
-      pages: ['Provázané věci jsou tvrdohlavé. Pohnou se všude, nebo nikde. Jako my, asi.'],
-    },
-    'bundle-intro': {
-      who: 'HALO',
-      pages: ['Dvě provázané bedny. Mysli na to, kde jim který svět nechá místo.'],
+      pages: [
+        'Na téhle straně je čas levný. Šedesát let na přemýšlení o tom, co ředitelka udělala.',
+        'Pořád nevím, co bych na jejím místě udělalo já. Možná ty to budeš vědět.',
+      ],
     },
     'hydro-vera': {
       who: 'DR. VERA SUNDOVÁ',
@@ -223,24 +229,29 @@ export const cs: Locale = {
     },
     'reactor-intro': {
       who: 'HALO',
-      pages: ['Reaktorová paluba. Paprsky pálí. Otáčej zrcadla a přiveď světlo k přijímači.'],
+      pages: [
+        'Reaktorová paluba. Paprsky pálí a procházejí všemi realitami najednou. Najdi spínače.',
+      ],
     },
     'reactor-kask': {
       who: 'INŽENÝRKA MIRA KASKOVÁ',
       pages: [
-        'Lasery reaktoru jsou ladičkou Prizmy. Zrcadla jsou ruční.',
-        'Otáčej je rukou a ruce drž mimo paprsek.',
+        'Lasery cívek jsou blokované spínači. Vypni spínač a vypneš paprsek.',
+        'A ať děláš cokoli, ruce drž mimo světlo.',
+      ],
+    },
+    'item-lens': {
+      who: 'HALO',
+      pages: [
+        'Hranolová čočka. Vystřelí náboj, který projde všemi realitami najednou.',
+        'Pravé tlačítko myši nebo L. Některé přijímače reagují jen na světlo ze všech světů najednou.',
       ],
     },
     'echo-reactor': {
       who: 'OZVĚNA · PRIMA',
       pages: [
-        'Ta verze, co zůstala v Primě, zkoušela zrcadla jako první. Světlu je jedno, ve kterém světě je.',
+        'Ta verze, co zůstala v Primě, našla čočku jako první. Světlu je jedno, ve kterém světě je.',
       ],
-    },
-    'phase-intro': {
-      who: 'HALO',
-      pages: ['Fázová okna. Paprsek, který vejde do jednoho, vyjde v jiné realitě.'],
     },
     'echo-elder3': {
       who: 'OZVĚNA · JANTAR',
@@ -249,15 +260,24 @@ export const cs: Locale = {
         'Je tam její syn.',
       ],
     },
-    'shadow-intro': {
-      who: 'HALO',
-      pages: ['Provázaná bedna vrhá stín ve všech realitách najednou.'],
-    },
     'reactor-halo': {
       who: 'HALO',
       pages: [
         'Mám teď čtyři verze sebe. Tři z nich se bojí.',
         'Já jsem ta čtvrtá a lžu ti, že jsem klidná.',
+      ],
+    },
+    'warden-intro': {
+      who: 'HALO',
+      pages: [
+        'Výtah do jádra je hlídaný. Strážce nezůstává v jedné realitě.',
+        'Jdi za ním — nebo počkej, až se vrátí do té tvé.',
+      ],
+    },
+    'warden-down': {
+      who: 'HALO',
+      pages: [
+        'Strážce padl. Něco z něj vypadlo — úlomek, který bzučí v tónině, pro kterou nemám jméno.',
       ],
     },
     'core-intro': {
@@ -267,8 +287,8 @@ export const cs: Locale = {
     'unlock-3': {
       who: 'HALO',
       pages: [
-        'Čtvrtá rezonance: Nula. Nepravděpodobná realita. Maže se.',
-        'Stiskni 4 a přejdeš. Dávej pozor, kam šlapeš — podlaha tam na sebe zapomíná.',
+        'Čtvrtá rezonance: Nula. Nepravděpodobná realita. Vymazává se.',
+        'Stiskni 4 a přejdeš. Co se zrodilo v Nule, nerespektuje hranice mezi světy — půjde to za tebou.',
       ],
     },
     'echo-glitch': {
@@ -295,7 +315,14 @@ export const cs: Locale = {
     },
     'heart-intro': {
       who: 'HALO',
-      pages: ['Srdce Prizmy. Tady se dotýkají všechny reality.'],
+      pages: [
+        'Srdce Prizmy. Existuje ve všech realitách, ale doopravdy je v každé chvíli jen v jedné.',
+        'Udeř tam, kde je skutečné. Sleduj barvu jeho světla.',
+      ],
+    },
+    'heart-down': {
+      who: 'HALO',
+      pages: ['Srdce utichlo. Prizma je otevřená.', 'Vstup do světla, T-7.'],
     },
     'core-halo': {
       who: 'HALO',

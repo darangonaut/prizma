@@ -12,7 +12,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta
       name="description"
-      content="Prizma — a neon sci-fi puzzle mystery across four mirrored realities."
+      content="Prizma — a neon sci-fi action mystery across four mirrored realities."
     />
     <title>Prizma</title>
   </head>
@@ -21,31 +21,36 @@
 
     <div id="hud" hidden>
       <div class="hud-top">
-        <div class="hud-title">
-          <span class="zone"></span>
-          <span class="chamber-no"></span>
+        <div class="hud-left">
+          <div class="hud-title">
+            <span class="zone"></span>
+            <span class="room-name"></span>
+          </div>
+          <div class="hud-life">
+            <span class="hp"></span>
+            <span class="inv"></span>
+          </div>
         </div>
         <div class="hud-stats">
-          <span class="moves"></span>
           <span class="logs"></span>
           <span class="echoes"></span>
-          <span class="inv"></span>
         </div>
         <div class="hud-buttons">
-          <button class="hint" aria-label="Hint">?</button>
-          <button class="undo" aria-label="Undo">↶</button>
-          <button class="reset" aria-label="Restart">⟲</button>
+          <button class="map-btn" aria-label="Map">▦</button>
           <button class="mute" aria-label="Sound">♪</button>
           <button class="pause" aria-label="Pause">❚❚</button>
         </div>
       </div>
+      <div class="boss" hidden>
+        <div class="boss-name"></div>
+        <div class="boss-bar"><i></i></div>
+      </div>
       <div class="realities"></div>
-      <button class="peek" aria-label="Look through">◎</button>
-      <div class="pad">
-        <button data-dir="0" aria-label="Up">▲</button>
-        <button data-dir="3" aria-label="Left">◀</button>
-        <button data-dir="1" aria-label="Right">▶</button>
-        <button data-dir="2" aria-label="Down">▼</button>
+      <div class="touch-buttons">
+        <button class="t-fire" aria-label="Fire">✦</button>
+        <button class="t-dash" aria-label="Dash">»</button>
+        <button class="t-lens" aria-label="Prism lens" hidden>◇</button>
+        <button class="t-peek" aria-label="Look through">◎</button>
       </div>
     </div>
 
@@ -70,7 +75,6 @@
         <div class="menu">
           <button class="continue big" hidden></button>
           <button class="new big"></button>
-          <button class="chambers-btn"></button>
         </div>
         <div class="langs">
           <button data-lang="en">EN</button>
@@ -79,12 +83,6 @@
         </div>
         <p class="controls"></p>
       </div>
-    </section>
-
-    <section id="chambers" class="screen" hidden>
-      <h2 class="chambers-title"></h2>
-      <div class="grid"></div>
-      <button class="back"></button>
     </section>
 
     <section id="confirm" class="screen dim" hidden>
@@ -104,10 +102,16 @@
       <p class="paused-controls"></p>
     </section>
 
-    <section id="cleared" class="screen dim" hidden>
-      <h2 class="cleared-title"></h2>
-      <p class="cleared-moves"></p>
-      <button class="next big"></button>
+    <section id="map" class="screen dim" hidden>
+      <h2 class="map-title"></h2>
+      <div class="map-grid"></div>
+      <p class="map-hint"></p>
+      <button class="map-close"></button>
+    </section>
+
+    <section id="dead" class="screen" hidden>
+      <h2 class="dead-title"></h2>
+      <p class="dead-text"></p>
     </section>
 
     <section id="choice" class="screen dim" hidden>

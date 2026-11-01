@@ -5,30 +5,24 @@ export const en: Locale = {
     tagline: 'One station. Four realities. One way out.',
     newGame: 'New game',
     continue: 'Continue',
-    chambers: 'Chambers',
     back: 'Back',
     sound: 'Sound',
     on: 'on',
     off: 'off',
     controlsKeys:
-      'Move: arrows / WASD · Shift reality: 1–4 or Q / E · Look through: hold Space · Undo: Z · Restart: R · Hint: H',
-    controlsTouch: 'Swipe or use the pad · Tap a reality to shift · Hold ◎ to look through',
-    hintThinking: 'Thinking…',
-    hintNone: 'No way out from here. Undo or restart.',
+      'Move: WASD / arrows · Aim: mouse · Shoot: click or J · Dash: Space · Shift reality: 1–4 or Q / E · Look through: hold Shift · Prism lens: right click or L · Map: M',
+    controlsTouch:
+      'Left thumb: move · ✦ shoot (aims by itself) · » dash · Tap a reality to shift · Hold ◎ to look through',
     paused: 'Paused',
     resume: 'Resume',
-    restart: 'Restart chamber',
+    toTerminal: 'Back to the last terminal',
     menu: 'Main menu',
-    undo: 'Undo',
-    moves: 'Moves',
-    chamber: 'Chamber',
-    cleared: 'Chamber cleared',
-    clearedMoves: '{n} moves',
-    best: 'best {n}',
-    next: 'Continue',
-    logs: 'Logs',
-    echoes: 'Echoes',
-    locked: 'Locked',
+    map: 'Station map',
+    mapHint:
+      'Terminals ▣ save your progress. From a room with a terminal you can travel to any other terminal.',
+    mapTravel: 'Choose a terminal ▣ to travel to.',
+    dead: 'Signal lost',
+    deadText: 'Restoring at the last terminal…',
     newGameConfirm: 'Start again? Your progress will be erased.',
     yes: 'Yes',
     no: 'No',
@@ -41,34 +35,47 @@ export const en: Locale = {
     zone_hydro: 'Hydroponics',
     zone_reactor: 'Reactor',
     zone_core: 'Prism Core',
-    ch_wake: 'Wake Cycle',
-    ch_rift: 'First Fracture',
-    ch_weave: 'Two Corridors',
-    ch_crosswire: 'Crossed Wires',
-    ch_pump: 'Pump Room',
-    ch_double: 'Double Bottom',
-    ch_amber: 'Amber Garden',
-    ch_twin: 'Entangled',
-    ch_bundle: 'The Bundle',
-    ch_beam: 'Hot Light',
-    ch_phase: 'Phase Window',
-    ch_shadow: 'Shadow Play',
-    ch_null: 'Null',
-    ch_interference: 'Interference',
-    ch_heart: 'Heart of the Prism',
+    room_k1: 'Cryo Pods',
+    room_k2: 'Service Corridor',
+    room_k3: 'Laboratory',
+    room_k4: 'Flooded Junction',
+    room_h1: 'Habitat Ring',
+    room_h2: 'Mess Hall',
+    room_h3: 'Pump Room',
+    room_h4: 'Lockers',
+    room_h5: "Director's Quarters",
+    room_y1: 'Hydroponics Gate',
+    room_y2: 'Garden',
+    room_y3: 'Overgrowth',
+    room_y4: 'Seed Vault',
+    room_y5: 'Great Tree',
+    room_r1: 'Reactor Gate',
+    room_r2: 'Coil Hall',
+    room_r3: 'Lens Chamber',
+    room_r4: 'Control Room',
+    room_r5: 'Core Lift',
+    room_c1: 'Core Approach',
+    room_c2: 'Archive',
+    room_c3: 'Interference',
+    room_c4: 'Hall of Echoes',
+    room_c5: 'Heart of the Prism',
+    boss_warden: 'Reactor Warden',
+    boss_heart: 'Heart of the Prism',
     blockedLocked: 'That reality is not tuned yet.',
     blockedSolid: 'Something is in the way in {r}.',
-    blockedBeam: 'A beam cuts through that spot in {r}.',
     needCard: 'Locked. It needs a keycard.',
-    needCutter: 'Overgrown. You need something sharp.',
-    gotCard: 'Keycard',
-    gotCutter: 'Plasma cutter',
+    needCutter: 'Living wood. Your pulse cannot cut it.',
+    got_card: 'Keycard',
+    got_cutter: 'Plasma cutter — your shots burn through vines',
+    got_lens: 'Prism lens',
+    gotHealth: 'Integrity +1',
     tunedReality: 'Reality tuned: {r}',
-    tapToContinue: 'tap or press Enter',
+    saved: 'Progress saved',
     endingTitle0: 'Collapse',
     endingTitle1: 'The Anchor',
     endingTitle2: 'Interference',
-    endingStats: 'Echoes found: {e} / {et} · Logs read: {l} / {lt} · Moves: {m}',
+    endingStats:
+      'Echoes found: {e} / {et} · Logs read: {l} / {lt} · Time: {m} min · Signals lost: {d}',
     endingAgain: 'Back to the menu',
     choose: 'What will you do?',
     choice0: 'Close the Prism',
@@ -83,7 +90,7 @@ export const en: Locale = {
       who: 'HALO',
       pages: [
         'Cryo cycle interrupted. Good morning, T-7.',
-        'The station is… difficult to describe right now. Please proceed to the cryo bay exit.',
+        'The station is… difficult to describe right now. Security is still in lockdown mode. Please proceed east, carefully.',
       ],
     },
     'kryo-pod': {
@@ -100,10 +107,11 @@ export const en: Locale = {
         'Since the Lom-1 test my sensors report four versions of every room. I am choosing to report only one.',
       ],
     },
-    'hint-push': {
+    'hint-combat': {
       who: 'HALO',
       pages: [
-        'Crates can be pushed. A pressure plate holds a door open while something rests on it.',
+        'Security drones. They still think we are in lockdown, and you are the intruder.',
+        'Your multitool fires a pulse: aim with the mouse and click, or press J. Space makes you dodge — bullets pass through you while you do.',
       ],
     },
     'rift-intro': {
@@ -116,12 +124,9 @@ export const en: Locale = {
       who: 'HALO',
       pages: [
         'That shard is a piece of the Prism. It resonates with… another station. The same rooms. Flooded.',
-        'Press 2 to step across. Press 1 to come back. You can only step where the other reality has room for you.',
+        'Press 2 to step across and 1 to come back. You can only step where the other reality has room for you. Hold Shift to look through first.',
+        'What exists in one reality cannot touch you in another. Neither can its bullets. And if you step into the spot where something stands over there… it will not stand for long.',
       ],
-    },
-    'hint-shift': {
-      who: 'HALO',
-      pages: ['Hold Space (or ◎) to look through into the other realities before you step.'],
     },
     'kryo-lab': {
       who: 'DR. VERA SUND',
@@ -132,7 +137,7 @@ export const en: Locale = {
     },
     'weave-intro': {
       who: 'HALO',
-      pages: ['Neither version of this corridor goes all the way through. Together, they might.'],
+      pages: ['Neither version of this junction goes all the way through. Together, they might.'],
     },
     'kryo-crew': {
       who: 'ENGINEER MIRA KASK',
@@ -144,7 +149,8 @@ export const en: Locale = {
     'habitat-intro': {
       who: 'HALO',
       pages: [
-        'Habitat ring. The wiring is shared between realities — a plate in one world can open a door in another.',
+        'Habitat ring. The wiring is shared between realities — a switch in one world can open a door in another.',
+        'Shoot a switch to flip it.',
       ],
     },
     'echo-drowned': {
@@ -156,7 +162,9 @@ export const en: Locale = {
     },
     'pump-intro': {
       who: 'HALO',
-      pages: ['The flooded habitat still has a working pump. It is wired to this side.'],
+      pages: [
+        'The flooded habitat still has a working pump. Restart it, and the water should drain from the whole ring.',
+      ],
     },
     'habitat-vera': {
       who: 'DR. VERA SUND',
@@ -170,10 +178,6 @@ export const en: Locale = {
       pages: [
         'The keycard is still in the locker. The pumps would have saved us. Nobody had the time.',
       ],
-    },
-    'double-intro': {
-      who: 'HALO',
-      pages: ['Two plates, two worlds, one door. Both must be held at the same time.'],
     },
     'habitat-crew': {
       who: 'BOTANIST ILAN OKAFOR',
@@ -193,6 +197,12 @@ export const en: Locale = {
         'Press 3 to step across.',
       ],
     },
+    'vines-intro': {
+      who: 'HALO',
+      pages: [
+        'The Amber side has had centuries to grow. Your pulse cannot cut through living wood.',
+      ],
+    },
     'echo-elder1': {
       who: 'ECHO · AMBER',
       pages: [
@@ -200,28 +210,22 @@ export const en: Locale = {
         'The cutter is where I left it. Vines grow back, but slowly.',
       ],
     },
+    'item-cutter': {
+      who: 'HALO',
+      pages: ['A plasma cutter. Your shots will burn through vines now.'],
+    },
     'hydro-botanist': {
       who: 'BOTANIST ILAN OKAFOR',
       pages: [
         'The tomatoes in tray 6 are fruiting in one reality and dust in the other. Same seed. Same hour.',
       ],
     },
-    'twin-intro': {
-      who: 'HALO',
-      pages: [
-        'This crate is entangled. It exists in every reality at once and moves in all of them together.',
-        'It only moves if there is room for it everywhere.',
-      ],
-    },
     'echo-elder2': {
       who: 'ECHO · AMBER',
       pages: [
-        'Entangled things are stubborn. They move everywhere or nowhere. Like us, I suppose.',
+        'Time is cheap on this side. Sixty years to think about what the director did.',
+        'I still do not know what I would have done in her place. Maybe you will.',
       ],
-    },
-    'bundle-intro': {
-      who: 'HALO',
-      pages: ['Two entangled crates. Think about where each world leaves them room.'],
     },
     'hydro-vera': {
       who: 'DR. VERA SUND',
@@ -233,25 +237,28 @@ export const en: Locale = {
     'reactor-intro': {
       who: 'HALO',
       pages: [
-        'Reactor deck. The beams are hot. Rotate the mirrors to guide the light to the receiver.',
+        'Reactor deck. The beams are hot and they cut through every reality at once. Find the switches.',
       ],
     },
     'reactor-kask': {
       who: 'ENGINEER MIRA KASK',
       pages: [
-        'The reactor lasers are the Prism’s tuning fork. The mirrors are manual.',
-        'Rotate them by hand, and keep your hands out of the beam.',
+        'The coil lasers are interlocked. Kill the switch, kill the beam.',
+        'And whatever you do, keep your hands out of the light.',
+      ],
+    },
+    'item-lens': {
+      who: 'HALO',
+      pages: [
+        'A prism lens. It fires a charge that passes through every reality at once.',
+        'Right click, or press L. Some receptors only answer to light from all the worlds together.',
       ],
     },
     'echo-reactor': {
       who: 'ECHO · PRIMA',
       pages: [
-        'The one who stayed in Prima tried the mirrors first. Light does not care which world it is in.',
+        'The one who stayed in Prima found the lens first. Light does not care which world it is in.',
       ],
-    },
-    'phase-intro': {
-      who: 'HALO',
-      pages: ['Phase windows. A beam that enters one comes out in another reality.'],
     },
     'echo-elder3': {
       who: 'ECHO · AMBER',
@@ -260,15 +267,24 @@ export const en: Locale = {
         'Her son is there.',
       ],
     },
-    'shadow-intro': {
-      who: 'HALO',
-      pages: ['An entangled crate casts a shadow in every reality at once.'],
-    },
     'reactor-halo': {
       who: 'HALO',
       pages: [
         'I have four versions of myself now. Three of them are afraid.',
         'I am the fourth, and I am lying to you about being calm.',
+      ],
+    },
+    'warden-intro': {
+      who: 'HALO',
+      pages: [
+        'The core lift is guarded. The warden does not stay in one reality.',
+        'Follow it — or wait for it to come back to yours.',
+      ],
+    },
+    'warden-down': {
+      who: 'HALO',
+      pages: [
+        'The warden is down. Something fell out of it — a shard that hums in a key I have no name for.',
       ],
     },
     'core-intro': {
@@ -279,7 +295,7 @@ export const en: Locale = {
       who: 'HALO',
       pages: [
         'The fourth resonance: Null. The improbable reality. It is being erased.',
-        'Press 4 to step across. Watch your step — the floor forgets itself there.',
+        'Press 4 to step across. Things born in Null do not respect the borders between worlds — they will follow you.',
       ],
     },
     'echo-glitch': {
@@ -308,7 +324,14 @@ export const en: Locale = {
     },
     'heart-intro': {
       who: 'HALO',
-      pages: ['The Prism’s heart. Every reality touches here.'],
+      pages: [
+        'The Prism’s heart. It exists in every reality, but only one of them is truly here at a time.',
+        'Strike where it is real. Watch the colour of its light.',
+      ],
+    },
+    'heart-down': {
+      who: 'HALO',
+      pages: ['The heart is quiet. The Prism is open.', 'Step into the light, T-7.'],
     },
     'core-halo': {
       who: 'HALO',
