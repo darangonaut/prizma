@@ -1,34 +1,66 @@
-/** Uložený postup (localStorage). Čistá logika — úložisko sa podáva zvonka. */
-export interface SaveData {
-  /** Index komory, v ktorej hráč je (alebo SECTORS.length po dohraní). */
-  chamber: number;
-  /** Najvyššia odomknutá komora. */
-  reached: number;
+import type { EnemyKind, ItemId } from './types';
+
+/** Postup hráča: čo má, čo už spravil a kde naposledy uložil (terminál). */
+export interface Progress {
+  /** Posledný terminál: miestnosť, poloha a realita, kde sa hráč obnoví. */
+  room: string;
+  x: number;
+  y: number;
+  r: number;
+  unlocked: number[];
+  items: ItemId[];
+  /** Zapnuté spínače (signály platia v celej stanici). */
+  signals: string[];
+  /** Zobraté predmety, otvorené zámky (uid entity). */
+  taken: string[];
+  /** Prerezané liany (miestnosť:realita:x:y). */
+  cut: string[];
+  bosses: EnemyKind[];
+  visited: string[];
+  /** Už zobrazené úvody miestností a spúšťače. */
+  seen: string[];
+  maxHp: number;
   logs: string[];
   echoes: string[];
-  /** Najmenej ťahov na komoru (id → ťahy). */
-  best: Record<string, number>;
-  /** Ťahy spolu za celú hru. */
-  moves: number;
+  deaths: number;
+  /** Čas hrania v sekundách. */
+  time: number;
+}
+
+export interface SaveData extends Progress {
+  started: boolean;
   endings: number[];
   lang: string;
   muted: boolean;
 }
 
-const KEY = 'prizma-save-v1';
+const KEY = 'prizma-save-v2';
+export const START_HP = 4;
 
-export function emptySave(lang = 'en'): SaveData {
+export function newProgress(): Progress {
   return {
-    chamber: 0,
-    reached: 0,
+    room: 'k1',
+    x: 4.5,
+    y: 6.5,
+    r: 0,
+    unlocked: [0],
+    items: [],
+    signals: [],
+    taken: [],
+    cut: [],
+    bosses: [],
+    visited: [],
+    seen: [],
+    maxHp: START_HP,
     logs: [],
     echoes: [],
-    best: {},
-    moves: 0,
-    endings: [],
-    lang,
-    muted: false,
+    deaths: 0,
+    time: 0,
   };
+}
+
+export function emptySave(lang = 'en'): SaveData {
+  return { ...newProgress(), started: false, endings: [], lang, muted: false };
 }
 
 export interface Storage {
