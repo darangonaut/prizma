@@ -211,13 +211,51 @@ export class Audio {
 
   play(ev: Ev[]): void {
     if (!this.ctx) return;
+    let shots = 0;
     for (const e of ev) {
       switch (e.t) {
-        case 'step':
-          this.blip(180 + Math.random() * 30, 0.05, 'triangle', 0.05);
+        case 'shoot':
+          this.blip(880 + Math.random() * 80, 0.07, 'square', 0.035, 440);
           break;
-        case 'blocked':
-          this.blip(70, 0.12, 'square', 0.04);
+        case 'lens':
+          this.hiss(0.4, 1200, 0.25, 3, 6000);
+          CHORDS[0]!
+            .slice(0, 3)
+            .forEach((f, i) => this.blip(f * 4, 0.35, 'sine', 0.06, f * 8, i * 0.03));
+          break;
+        case 'enemyShot':
+          // Viac výstrelov v jednom snímku znie ako jeden.
+          if (shots++ === 0) this.blip(300 + e.r * 60, 0.12, 'sawtooth', 0.025, 180);
+          break;
+        case 'hit':
+          this.blip(e.boss ? 140 : 220, 0.06, 'square', 0.05, 90);
+          break;
+        case 'kill':
+          this.hiss(0.35, 800, 0.25, 1, 200);
+          this.blip(
+            e.kind === 'warden' || e.kind === 'heart' ? 60 : 160,
+            0.3,
+            'sawtooth',
+            0.08,
+            40,
+          );
+          break;
+        case 'spark':
+          break;
+        case 'hurt':
+          this.blip(120, 0.25, 'sawtooth', 0.12, 50);
+          this.hiss(0.2, 400, 0.2, 2);
+          break;
+        case 'death':
+          this.blip(220, 1.2, 'sawtooth', 0.12, 30);
+          this.hiss(1.2, 300, 0.3, 1, 60);
+          break;
+        case 'dash':
+          this.hiss(0.18, 900, 0.18, 2, 2600);
+          break;
+        case 'telefrag':
+          this.hiss(0.5, 200, 0.35, 1, 5000);
+          this.blip(90, 0.4, 'square', 0.1, 30);
           break;
         case 'shift': {
           this.hiss(0.45, 300, 0.35, 2, 4000);
@@ -228,27 +266,19 @@ export class Audio {
           break;
         }
         case 'shiftBlocked':
-          if (e.why !== 'same') {
+          if (e.why === 'solid' || e.why === 'locked') {
             this.blip(160, 0.18, 'sawtooth', 0.06, 60);
             this.hiss(0.15, 900, 0.12, 4);
           }
           break;
-        case 'push':
-          this.blip(e.twin ? 90 : 110, 0.16, 'triangle', 0.14, 60);
-          this.hiss(0.12, 500, 0.12, 1);
-          if (e.twin) this.blip(880, 0.3, 'sine', 0.04, 1320);
-          break;
-        case 'rotate':
-          this.blip(1400, 0.04, 'square', 0.04);
-          this.blip(900, 0.08, 'triangle', 0.06, 1200, 0.03);
-          break;
-        case 'toggle':
-          this.blip(e.on ? 660 : 440, 0.1, 'square', 0.05);
-          break;
         case 'pickup':
+        case 'health':
           [0, 4, 7, 12].forEach((s, i) =>
             this.blip(523.25 * 2 ** (s / 12), 0.25, 'sine', 0.08, undefined, i * 0.06),
           );
+          break;
+        case 'heal':
+          this.blip(660, 0.15, 'sine', 0.06, 990);
           break;
         case 'unlock':
           CHORDS[e.r]!.forEach((f, i) => this.blip(f * 2, 1.6, 'sine', 0.07, undefined, i * 0.09));
@@ -258,34 +288,42 @@ export class Audio {
           for (let i = 0; i < 3; i++)
             this.blip(1200 + i * 200, 0.05, 'square', 0.03, undefined, i * 0.07);
           break;
+        case 'switch':
+          this.blip(660, 0.1, 'square', 0.05);
+          this.blip(990, 0.15, 'square', 0.04, undefined, 0.08);
+          break;
         case 'open':
           this.blip(523.25, 0.2, 'sine', 0.08);
           this.blip(783.99, 0.3, 'sine', 0.08, undefined, 0.1);
           break;
+        case 'save':
+          [0, 7, 12].forEach((s, i) =>
+            this.blip(392 * 2 ** (s / 12), 0.4, 'triangle', 0.06, undefined, i * 0.08),
+          );
+          break;
         case 'cut':
           this.hiss(0.2, 2500, 0.2, 2, 800);
           break;
-        case 'doors':
-          if (e.opened) this.hiss(0.35, 600, 0.2, 3, 1800);
-          if (e.closed) this.hiss(0.3, 1500, 0.18, 3, 400);
-          break;
-        case 'receiver':
-          if (e.lit) this.blip(1046.5, 0.6, 'sine', 0.08, 1568);
+        case 'zap':
+          this.hiss(0.25, 3000, 0.2, 6, 900);
           break;
         case 'needItem':
           this.blip(220, 0.15, 'square', 0.04, 200, 0.1);
           break;
-        case 'exit':
-          CHORDS[0]!.forEach((f, i) => this.blip(f * 2, 1.2, 'triangle', 0.06, f * 4, i * 0.05));
+        case 'room':
+          this.hiss(0.3, 500, 0.08, 1, 1500);
+          break;
+        case 'bossShift':
+          this.hiss(0.6, 150, 0.3, 2, 3000);
+          break;
+        case 'bossDown':
+        case 'core':
+          CHORDS[0]!.forEach((f, i) => this.blip(f * 2, 1.4, 'triangle', 0.07, f * 4, i * 0.07));
           break;
         default:
           break;
       }
     }
-  }
-
-  undo(): void {
-    this.blip(600, 0.1, 'sine', 0.05, 300);
   }
 
   click(): void {

@@ -125,6 +125,8 @@ export class Sim {
   private terminal = '';
   /** Glitche nasledujú hráča do inej reality s oneskorením. */
   private shiftedAt = -10;
+  /** Chvíľa po vstupe do miestnosti, keď nepriatelia ešte nekonajú. */
+  private grace = 0;
 
   constructor(defs: RoomDef[], prog: Progress, seed = 1) {
     this.defs = defs;
@@ -171,6 +173,7 @@ export class Sim {
     this.p.y = y;
     this.p.r = r;
     this.p.dash = 0;
+    this.grace = 0.7;
     this.terminal = '';
     this.bullets = [];
     this.drops = [];
@@ -474,7 +477,8 @@ export class Sim {
     }
 
     this.updateBullets(dt);
-    for (const e of this.enemies) if (!e.dead) updateEnemy(this, e, dt);
+    if (this.grace > 0) this.grace -= dt;
+    else for (const e of this.enemies) if (!e.dead) updateEnemy(this, e, dt);
     this.contact();
     this.enemies = this.enemies.filter((e) => !e.dead);
     this.updateDrops(dt);
